@@ -11,6 +11,21 @@ service: serverless-hello-world
 provider:
   name: aws
   runtime: nodejs6.10
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource:
+        - { "Fn::GetAtt": ["NamesDynamoDBTable", "Arn" ] }
+  environment:
+    NAMES_TABLE: { "Ref": "NamesDynamoDBTable" }
+
+# provider:
+#   name: google
+#   runtime: nodejs
+#   project: aerocene-199220
+#   credentials: ~/.gcloud/Aerocene-c742cca1a9f5.json
 
 # The `functions` block defines what code to deploy
 functions:
@@ -22,3 +37,41 @@ functions:
           path: hello-world
           method: get
           cors: true
+  helloName:
+    handler: handler.helloName
+    events:
+      - http:
+          path: hello-name
+          method: get
+          cors: true
+  saveName:
+    handler: handler.saveName
+    events:
+      - http:
+          path: name
+          method: post
+          cors: true
+  getName:
+    handler: handler.getName
+    events:
+      - http:
+          path: name
+          method: get
+          cors: true
+resources:
+  Resources:
+    NamesDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: name
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: name
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
