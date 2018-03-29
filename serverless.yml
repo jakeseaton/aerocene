@@ -4,74 +4,107 @@
 # Serverless.yml is the configuration the CLI
 # uses to deploy your code to your provider of choice
 
-# The `service` block is the name of the service
-service: serverless-hello-world
 
-# The `provider` block defines where your service will be deployed
+service: aerocene
+
+plugins:
+  - serverless-python-requirements
+  - serverless-wsgi
+
+custom:
+  wsgi:
+    app: app.app
+    packRequirements: false
+  pythonRequirements:
+    dockerizePip: non-linux
+
 provider:
   name: aws
-  runtime: nodejs6.10
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-      Resource:
-        - { "Fn::GetAtt": ["NamesDynamoDBTable", "Arn" ] }
-  environment:
-    NAMES_TABLE: { "Ref": "NamesDynamoDBTable" }
+  runtime: python3.6
+  stage: dev
+  region: us-east-1
 
-# provider:
-#   name: google
-#   runtime: nodejs
-#   project: aerocene-199220
-#   credentials: ~/.gcloud/Aerocene-c742cca1a9f5.json
-
-# The `functions` block defines what code to deploy
 functions:
-  helloWorld:
-    handler: handler.helloWorld
-    # The `events` block defines how to trigger the handler.helloWorld code
+  app:
+    handler: wsgi.handler
     events:
-      - http:
-          path: hello-world
-          method: get
-          cors: true
-  helloName:
-    handler: handler.helloName
-    events:
-      - http:
-          path: hello-name
-          method: get
-          cors: true
-  saveName:
-    handler: handler.saveName
-    events:
-      - http:
-          path: name
-          method: post
-          cors: true
-  getName:
-    handler: handler.getName
-    events:
-      - http:
-          path: name
-          method: get
-          cors: true
-resources:
-  Resources:
-    NamesDynamoDBTable:
-      Type: 'AWS::DynamoDB::Table'
-      Properties:
-        AttributeDefinitions:
-          -
-            AttributeName: name
-            AttributeType: S
-        KeySchema:
-          -
-            AttributeName: name
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
+      - http: ANY /
+      - http: 'ANY {proxy+}'
+
+# The `service` block is the name of the service
+# service: aerocene
+
+# plugins:
+#   - serverless-python-requirements
+#   - serverless-wgsi
+
+# # The `provider` block defines where your service will be deployed
+# provider:
+#   name: aws
+#   runtime: python3.6
+#   stage: dev
+
+#   iamRoleStatements:
+#     - Effect: Allow
+#       Action:
+#         - dynamodb:GetItem
+#         - dynamodb:PutItem
+#       Resource:
+#         - { "Fn::GetAtt": ["NamesDynamoDBTable", "Arn" ] }
+#   environment:
+#     NAMES_TABLE: { "Ref": "NamesDynamoDBTable" }
+
+# # provider:
+# #   name: google
+# #   runtime: nodejs
+# #   project: aerocene-199220
+# #   credentials: ~/.gcloud/Aerocene-c742cca1a9f5.json
+
+# # The `functions` block defines what code to deploy
+# functions:
+#   helloWorld:
+#     handler: handler.helloWorld
+#     # The `events` block defines how to trigger the handler.helloWorld code
+#     events:
+#       - http:
+#           path: hello-world
+#           method: get
+#           cors: true
+#   helloName:
+#     handler: handler.helloName
+#     events:
+#       - http:
+#           path: hello-name
+#           method: get
+#           cors: true
+#   saveName:
+#     handler: handler.saveName
+#     events:
+#       - http:
+#           path: name
+#           method: post
+#           cors: true
+#   getName:
+#     handler: handler.getName
+#     events:
+#       - http:
+#           path: name
+#           method: get
+#           cors: true
+# resources:
+#   Resources:
+#     NamesDynamoDBTable:
+#       Type: 'AWS::DynamoDB::Table'
+#       Properties:
+#         AttributeDefinitions:
+#           -
+#             AttributeName: name
+#             AttributeType: S
+#         KeySchema:
+#           -
+#             AttributeName: name
+#             KeyType: HASH
+#         ProvisionedThroughput:
+#           ReadCapacityUnits: 1
+#           WriteCapacityUnits: 1
 
