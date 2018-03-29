@@ -1,0 +1,23 @@
+{
+  "name": "aerocene",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jakeseaton/aerocene.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jakeseaton/aerocene/issues"
+  },
+  "homepage": "https://github.com/jakeseaton/aerocene#readme",
+  "devDependencies": {
+    "serverless-python-requirements": "^4.0.0",
+    "serverless-wsgi": "^1.4.7"
+  }
+}
