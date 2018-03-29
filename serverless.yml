@@ -1,10 +1,3 @@
-# Welcome to serverless. Read the docs
-# https://serverless.com/framework/docs/
-
-# Serverless.yml is the configuration the CLI
-# uses to deploy your code to your provider of choice
-
-
 service: aerocene
 
 plugins:
@@ -12,6 +5,7 @@ plugins:
   - serverless-wsgi
 
 custom:
+  tableName: 'users-table-${self:provider.stage}'
   wsgi:
     app: app.app
     packRequirements: false
@@ -23,6 +17,19 @@ provider:
   runtime: python3.6
   stage: dev
   region: us-east-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - { "Fn::GetAtt": ["UsersDynamoDBTable", "Arn" ] }
+  environment:
+    USERS_TABLE: ${self:custom.tableName}
 
 functions:
   app:
@@ -30,81 +37,31 @@ functions:
     events:
       - http: ANY /
       - http: 'ANY {proxy+}'
+  getUser:
+    handler: wsgi.handler
+    events:
+      - http: 'GET /users/{proxy+}'
+  createUser:
+    handler: wsgi.handler
+    events:
+      - http: 'POST /users'
 
-# The `service` block is the name of the service
-# service: aerocene
+resources:
+  Resources:
+    UsersDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: userId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.tableName}
 
-# plugins:
-#   - serverless-python-requirements
-#   - serverless-wgsi
-
-# # The `provider` block defines where your service will be deployed
-# provider:
-#   name: aws
-#   runtime: python3.6
-#   stage: dev
-
-#   iamRoleStatements:
-#     - Effect: Allow
-#       Action:
-#         - dynamodb:GetItem
-#         - dynamodb:PutItem
-#       Resource:
-#         - { "Fn::GetAtt": ["NamesDynamoDBTable", "Arn" ] }
-#   environment:
-#     NAMES_TABLE: { "Ref": "NamesDynamoDBTable" }
-
-# # provider:
-# #   name: google
-# #   runtime: nodejs
-# #   project: aerocene-199220
-# #   credentials: ~/.gcloud/Aerocene-c742cca1a9f5.json
-
-# # The `functions` block defines what code to deploy
-# functions:
-#   helloWorld:
-#     handler: handler.helloWorld
-#     # The `events` block defines how to trigger the handler.helloWorld code
-#     events:
-#       - http:
-#           path: hello-world
-#           method: get
-#           cors: true
-#   helloName:
-#     handler: handler.helloName
-#     events:
-#       - http:
-#           path: hello-name
-#           method: get
-#           cors: true
-#   saveName:
-#     handler: handler.saveName
-#     events:
-#       - http:
-#           path: name
-#           method: post
-#           cors: true
-#   getName:
-#     handler: handler.getName
-#     events:
-#       - http:
-#           path: name
-#           method: get
-#           cors: true
-# resources:
-#   Resources:
-#     NamesDynamoDBTable:
-#       Type: 'AWS::DynamoDB::Table'
-#       Properties:
-#         AttributeDefinitions:
-#           -
-#             AttributeName: name
-#             AttributeType: S
-#         KeySchema:
-#           -
-#             AttributeName: name
-#             KeyType: HASH
-#         ProvisionedThroughput:
-#           ReadCapacityUnits: 1
-#           WriteCapacityUnits: 1
 
