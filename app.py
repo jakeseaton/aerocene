@@ -43,6 +43,22 @@ def get_user(user_id):
         'name': item.get('name').get('S')
     })
 
+@app.route("/instagram/<string:user_id>")
+def get_instagram_user(user_id):
+    print("This is the id", user_id)
+    resp = client.get_item(
+        TableName=INSTAGRAM_USERS_TABLE,
+        Key={
+            'id': {'S': user_id}
+        }
+    )
+    item = resp.get('Item')
+    if not item:
+        return jsonify({ 'error': 'User does not exist' }), 404
+
+    return jsonify(item)
+
+
 @app.route("/instagram", methods=["POST"])
 def create_instagram_user():
     username = request.json.get('username')

@@ -33,7 +33,6 @@ def store_user(user):
     # store the user in the database
 
 def get_instagram_user(username, *args, **kwargs):
-    username
     response = get_user_response(username)
     user = json.loads(response)['graphql']['user']
 
@@ -42,6 +41,27 @@ def get_instagram_user(username, *args, **kwargs):
 
     return user
 
+def get_user_posts(username, *args, **kwargs):
+    print("Username", username)
+
+    user = get_instagram_user(username)
+
+    open("data/%s.json" % username, "w").write(json.dumps(user))
+
+    media = user['edge_owner_to_timeline_media']
+
+    posts = []
+    if not media['count']:
+        return posts
+
+    posts += media['edges']
+
+    if media['page_info']['has_next_page']:
+        end_curos = media['page_info']['end_cursor']
+
+    print("currently have", len(posts), "of", media['count'], "media")
+
+    return username
 
 def get_json(*args, **kwargs):
     resp = safe_get(*args, **kwargs)

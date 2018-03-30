@@ -70,10 +70,18 @@ functions:
   get_instagram_user:
     handler: functions.get_instagram_user
 
+  get_user_posts:
+    handler: functions.get_user_posts
+
   createInstagramUser:
     handler: wsgi.handler
     events:
       - http: 'POST /instagram'
+
+  getInstagramUser:
+    handler: wsgi.handler
+    events:
+      - http: 'GET /instagram/{proxy+}'
 
 
 
