@@ -6,6 +6,7 @@ plugins:
 
 custom:
   tableName: 'users-table-${self:provider.stage}'
+  instagramUserTableName: 'instagram-users-table-${self:provider.stage}'
   wsgi:
     app: app.app
     packRequirements: false
@@ -28,8 +29,19 @@ provider:
         - dynamodb:DeleteItem
       Resource:
         - { "Fn::GetAtt": ["UsersDynamoDBTable", "Arn" ] }
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - { "Fn::GetAtt": ["InstagramUsersDynamoDBTable", "Arn" ] }
   environment:
     USERS_TABLE: ${self:custom.tableName}
+    INSTAGRAM_USERS_TABLE: ${self:custom.instagramUserTableName}
 
 functions:
   app:
@@ -41,13 +53,48 @@ functions:
     handler: wsgi.handler
     events:
       - http: 'GET /users/{proxy+}'
+
+
+
   createUser:
     handler: wsgi.handler
     events:
       - http: 'POST /users'
+  posts:
+    handler: wsgi.handler
+    events:
+      - http: 'POST /posts'
+  hello:
+    handler: functions.hello
+
+  get_instagram_user:
+    handler: functions.get_instagram_user
+
+  createInstagramUser:
+    handler: wsgi.handler
+    events:
+      - http: 'POST /instagram'
+
+
 
 resources:
   Resources:
+    InstagramUsersDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.instagramUserTableName}
+
     UsersDynamoDBTable:
       Type: 'AWS::DynamoDB::Table'
       Properties:

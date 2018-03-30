@@ -4,6 +4,7 @@ const AWS = require("aws-sdk");
 const NAMES_TABLE = process.env.NAMES_TABLE;
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
+
 module.exports.helloWorld = (event, context, callback) => {
   const response = {
     statusCode: 200,
