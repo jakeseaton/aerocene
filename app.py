@@ -58,6 +58,11 @@ def get_instagram_user(user_id):
 
     return jsonify(item)
 
+@app.route('/scrape/<string:location_id>')
+def scrape_instagram_location(location_id):
+    from functions import scrape_location
+    return jsonify(scrape_location(location_id))
+
 
 @app.route("/instagram", methods=["POST"])
 def create_instagram_user():

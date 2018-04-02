@@ -1,7 +1,7 @@
 import json
 from constants import *
 import requests
-
+import os
 
 def hello(event, context):
     # print("YOOOO")
@@ -123,3 +123,12 @@ def safe_get(*args, **kwargs):
             #     elif keep_trying == False:
             #         return
             raise
+def scrape_location(location, *args, **kwargs):
+    os.system('instagram-scraper --location %s --media-metadata --maximum=100 --media-types none' % location)
+    d = json.loads(open("%s/%s.json" % (location, location), "r").read())
+    c = open("cursor.txt", "r").read()
+    return {
+        "cursor": c,
+        "data": d
+    }
+

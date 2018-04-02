@@ -12,6 +12,7 @@ custom:
     packRequirements: false
   pythonRequirements:
     dockerizePip: non-linux
+    zipImport: true
 
 provider:
   name: aws
@@ -72,6 +73,8 @@ functions:
 
   get_user_posts:
     handler: functions.get_user_posts
+  scrape_location:
+    handler: functions.scrape_location
 
   createInstagramUser:
     handler: wsgi.handler
@@ -82,7 +85,10 @@ functions:
     handler: wsgi.handler
     events:
       - http: 'GET /instagram/{proxy+}'
-
+  scrapeInstagramLocation:
+    handler: wsgi.handler
+    events:
+      - http: 'GET /scrape/{proxy+}'
 
 
 resources:
