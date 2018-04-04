@@ -50,6 +50,23 @@ while developing thus far.
 
 # TODO
 
+Tasks:
+1 - Find and implement a better example than Instagram
+    Linkedin? Pinterest? Something that doesn't intentionally
+    slow down their API and responds within 6 seconds.
+    Could also build our own API server.
+    https://github.com/ericfourrier/scrape-linkedin
+
+2 - Build a visualization
+    - just set up a web page which allows you to type in a location
+    and show both systems scraping stuff
+
+3 - Optimize instagram implementation
+    - Stop writing to ephemeral disk
+    - Run trials with local
+
+
+
 run lots of different trials in different environments
 
 build a visualization

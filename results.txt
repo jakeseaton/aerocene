@@ -1,0 +1,10 @@
+Run on local machine (Jake's Mac in eliot library)
+Searching 212988663 for posts: 980 media [03:57,  4.13 media/s]
+real    3m58.260s
+user    0m5.602s
+sys 0m0.681s
+
+
+at 100 posts it takes like 30 seconds per request
+
+at 10 psots it takes like 2.5-3

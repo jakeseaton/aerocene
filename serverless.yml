@@ -1,3 +1,6 @@
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/quickref-dynamodb.html
+# https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/quickref-rds.html
+
 service: aerocene
 
 plugins:
@@ -7,6 +10,8 @@ plugins:
 custom:
   tableName: 'users-table-${self:provider.stage}'
   instagramUserTableName: 'instagram-users-table-${self:provider.stage}'
+  instagramPostTableName: 'instagram-post-table-${self:provider.stage}'
+  instagramCursorTableName: 'instagram-cursor-table-${self:provider.stage}'
   wsgi:
     app: app.app
     packRequirements: false
@@ -20,6 +25,8 @@ provider:
   stage: dev
   region: us-east-1
   iamRoleStatements:
+    # Can you collapse these into one? Declaring this effect for
+    # all resources?
     - Effect: Allow
       Action:
         - dynamodb:Query
@@ -54,8 +61,6 @@ functions:
     handler: wsgi.handler
     events:
       - http: 'GET /users/{proxy+}'
-
-
 
   createUser:
     handler: wsgi.handler
@@ -103,6 +108,41 @@ functions:
 
 resources:
   Resources:
+    InstagramCursorDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: ${self:custom.instagramCursorTableName}
+        AttributeDefinitions:
+          -
+            # the string that stores the cursor
+            AttributeName: cursor
+            AttributeType: S
+        KeySchema:
+          -
+            # we want these to be unique
+            AttributeName: cursor
+            KeyType: HASH
+        ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+
+
+    InstagramPostDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: ${self.custom.instagramPostTableName}
+        AttributeDefinitions:
+          -
+            # the id of the post
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            # these should be unique
+            AttributeName: id
+            KeyType: HASH
+
+
     InstagramUsersDynamoDBTable:
       Type: 'AWS::DynamoDB::Table'
       Properties:
