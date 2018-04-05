@@ -21,7 +21,7 @@ else:
     base_url = "https://kv5r3g2u1b.execute-api.us-east-1.amazonaws.com/dev"
 
 # construct a template for generating new urls
-url_to_format += "/scrape_instagram?&location={0}&cursor={1}"
+url_to_format = base_url + "/scrape_instagram?&location={0}&cursor={1}"
 
 # initialize a set of scraped post ids
 record_ids = set()

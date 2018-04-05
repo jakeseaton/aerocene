@@ -92,3 +92,5 @@ at 100 images per request we get 10M free images.
 
 This enables us to do 1000 trials of scraping 10,000 images each.
 
+
+Use dynamo db locally?

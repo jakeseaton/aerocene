@@ -50,6 +50,8 @@ provider:
   environment:
     USERS_TABLE: ${self:custom.tableName}
     INSTAGRAM_USERS_TABLE: ${self:custom.instagramUserTableName}
+    INSTAGRAM_POST_TABLE: ${self:custom.instagramPostTableName}
+    INSTAGRAM_CURSOR_TABLE: ${self:custom.instagramCursorTableName}
 
 functions:
   app:
@@ -108,41 +110,6 @@ functions:
 
 resources:
   Resources:
-    InstagramCursorDynamoDbTable:
-      Type: 'AWS::DynamoDB::Table'
-      Properties:
-        TableName: ${self:custom.instagramCursorTableName}
-        AttributeDefinitions:
-          -
-            # the string that stores the cursor
-            AttributeName: cursor
-            AttributeType: S
-        KeySchema:
-          -
-            # we want these to be unique
-            AttributeName: cursor
-            KeyType: HASH
-        ProvisionedThroughput:
-            ReadCapacityUnits: 1
-            WriteCapacityUnits: 1
-
-
-    InstagramPostDynamoDBTable:
-      Type: 'AWS::DynamoDB::Table'
-      Properties:
-        TableName: ${self.custom.instagramPostTableName}
-        AttributeDefinitions:
-          -
-            # the id of the post
-            AttributeName: id
-            AttributeType: S
-        KeySchema:
-          -
-            # these should be unique
-            AttributeName: id
-            KeyType: HASH
-
-
     InstagramUsersDynamoDBTable:
       Type: 'AWS::DynamoDB::Table'
       Properties:
@@ -174,5 +141,39 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
         TableName: ${self:custom.tableName}
+
+    InstagramCursorDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: ${self:custom.instagramCursorTableName}
+        AttributeDefinitions:
+          -
+            # the string that stores the cursor
+            AttributeName: cursor
+            AttributeType: S
+        KeySchema:
+          -
+            # we want these to be unique
+            AttributeName: cursor
+            KeyType: HASH
+        ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+
+
+    InstagramPostDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: ${self:custom.instagramPostTableName}
+        AttributeDefinitions:
+          -
+            # the id of the post
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            # these should be unique
+            AttributeName: id
+            KeyType: HASH
 
 
