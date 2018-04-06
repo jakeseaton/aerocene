@@ -58,6 +58,15 @@ sls swgi serve
 
 python trial.py
 
+To run dynamodb locally run sls dynamodb install (once you've added the plugin)
+
+sls dynamodb start --migrate (you have to run it with this flag every time because=
+out of the box it isn't saving the data, just storing it in memory. You can change this but
+to do that you have to change some of this stuff
+https://www.npmjs.com/package/serverless-dynamodb-local)
+
+
+If your stuff takes forever it's likely that the database isn't runnign
 # Notes
 
 We should be good on the AWS free tier as long

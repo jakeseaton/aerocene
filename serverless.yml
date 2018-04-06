@@ -6,6 +6,7 @@ service: aerocene
 plugins:
   - serverless-python-requirements
   - serverless-wsgi
+  - serverless-dynamodb-local
 
 custom:
   tableName: 'users-table-${self:provider.stage}'
@@ -47,6 +48,7 @@ provider:
         - dynamodb:DeleteItem
       Resource:
         - { "Fn::GetAtt": ["InstagramUsersDynamoDBTable", "Arn" ] }
+      # NEED TO SPECIFY THESE FOR NEW TABLES IF STUFF ISNT WORKING
   environment:
     USERS_TABLE: ${self:custom.tableName}
     INSTAGRAM_USERS_TABLE: ${self:custom.instagramUserTableName}
@@ -175,5 +177,8 @@ resources:
             # these should be unique
             AttributeName: id
             KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
 
 

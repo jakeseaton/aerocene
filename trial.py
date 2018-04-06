@@ -1,10 +1,10 @@
 import requests
 import json
 import time
+from settings import DEBUG
 
 # are we debugging locally or running
 # on the delopment instance
-DEBUG = True
 
 # scrape san francicso as the test case
 location = 44961364
