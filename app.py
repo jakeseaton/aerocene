@@ -9,6 +9,8 @@ app = Flask(__name__)
 
 USERS_TABLE = os.environ['USERS_TABLE']
 INSTAGRAM_USERS_TABLE = os.environ['INSTAGRAM_USERS_TABLE']
+INSTAGRAM_POST_TABLE = os.environ['INSTAGRAM_POSTS_TABLE']
+INSTAGRAM_CURSOR_TABLE = os.environ['INSTAGRAM_CURSOR_TABLE']
 
 
 @app.route("/")

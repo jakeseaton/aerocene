@@ -20,6 +20,23 @@ but it seems that the instagram api is just incredibly slow on
 purpose to disable scraping.
 
 # GETTING STARTED
+Clone the repository
+
+make a virtual environment
+virtualenv <name> --python=python3
+
+activate virtual environment
+source <name>/bin/activate
+
+install requiremenst
+pip install -r requirements.txt
+
+install npm dependencies
+npm install
+
+try to run the server
+sls wsgi serve
+
 Install the serverless framework
 
 Setup serverless to work with AWS -- if you
