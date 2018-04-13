@@ -65,6 +65,8 @@ out of the box it isn't saving the data, just storing it in memory. You can chan
 to do that you have to change some of this stuff
 https://www.npmjs.com/package/serverless-dynamodb-local)
 
+You need docker installed to deploy
+
 
 If your stuff takes forever it's likely that the database isn't runnign
 # Notes
@@ -120,3 +122,12 @@ This enables us to do 1000 trials of scraping 10,000 images each.
 
 
 Use dynamo db locally?
+
+# TODO
+Do a test to figure out how often the ip changes. Write a lambda function that
+just sends a request to a server or localhost and then deploy it and see how often it changes
+
+
+Can we scrape just linkedin profile pictures?
+
+Or senior photos on instagram somehow?
