@@ -1,4 +1,5 @@
 git+https://github.com/FlatterStyle/instagram-scraper
+git+https://git@github.com/ping/instagram_private_api.git@1.5.5
 boto3==1.6.19
 botocore==1.9.19
 certifi==2018.1.18

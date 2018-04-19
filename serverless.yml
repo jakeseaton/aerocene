@@ -76,6 +76,8 @@ functions:
       - http: 'POST /posts'
   hello:
     handler: functions.hello
+  test_api:
+    handler: functions.test_api
 
   get_instagram_user:
     handler: functions.get_instagram_user

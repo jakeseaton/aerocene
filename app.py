@@ -58,6 +58,7 @@ def insert_post(post):
 @app.route('/scrape_instagram', methods=['GET'])
 def scrape_instagram(*args, **kwargs):
     from functions import scrape_location_at_cursor
+    from functions import much_better_scrape
 
     # get the location and cursor from the get parameters
     # of the request
@@ -69,7 +70,9 @@ def scrape_instagram(*args, **kwargs):
         # return an error
         return jsonify({'error': 'You must specify a location or an end cursor to scrape.'})
 
-    result = scrape_location_at_cursor(location, cursor)
+    result = much_better_scrape({ 'location': location, 'cursor': cursor}, {})
+
+    # result = scrape_location_at_cursor(location, cursor)
 
     # we should use a batch insert for this!
     for post in result['data']:
