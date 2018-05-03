@@ -61,50 +61,12 @@ functions:
     events:
       - http: ANY /
       - http: 'ANY {proxy+}'
-  getUser:
-    handler: wsgi.handler
-    events:
-      - http: 'GET /users/{proxy+}'
-
-  createUser:
-    handler: wsgi.handler
-    events:
-      - http: 'POST /users'
   posts:
     handler: wsgi.handler
     events:
       - http: 'POST /posts'
   hello:
     handler: functions.hello
-  test_api:
-    handler: functions.test_api
-
-  get_instagram_user:
-    handler: functions.get_instagram_user
-
-  get_user_posts:
-    handler: functions.get_user_posts
-  scrape_location:
-    handler: functions.scrape_location
-
-  createInstagramUser:
-    handler: wsgi.handler
-    events:
-      - http: 'POST /instagram'
-
-  getInstagramUser:
-    handler: wsgi.handler
-    events:
-      - http: 'GET /instagram/{proxy+}'
-  scrapeInstagramLocation:
-    handler: wsgi.handler
-    events:
-      - http: 'GET /scrape/{proxy+}'
-
-  scrapeInstagramLocationAtCursor:
-    handler: wsgi.handler
-    events:
-      - http: 'GET /scrape_cursor/{proxy+}'
 
   scrapeInstagram:
     handler: wsgi.handler
