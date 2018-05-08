@@ -3,6 +3,9 @@ from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import random
 
+import json
+import boto3
+import asyncio
 
 
 def hello(event, context):
@@ -29,7 +32,7 @@ def hello(event, context):
 
     final = ''
     #Test with icanhazip.com (returns proxied ip address)
-    for n in range(1, 13):
+    for n in range(0, 2):
         print("First request")
         req = Request('http://icanhazip.com')
         req.set_proxy(proxy['ip'] + ':' + proxy['port'], 'http')
@@ -44,15 +47,36 @@ def hello(event, context):
             final = final + '#' + str(n) + ':' + my_ip
         except:
             del proxies[proxy_index]
+            final = final + '# ' + 'failed'
             #print('Proxy ' + proxy['ip'] + ':' + proxy['port'] + ' deleted.')
             proxy_index = random.randint(0, len(proxies) - 1)
             proxy = proxies[proxy_index]
-
+    final += event
     response = {
         "statusCode": 200,
         "body": final
     }
     #print(final)
     return response
+
+def cron_launcher(event, context):
+    lambda_client = boto3.client('lambda', region_name="us-east-1")
+    #console.log("start of the for loop")
+    string_response = ''
+
+    lst = list(range(4))
+    for i in lst:
+        response = lambda_client.invoke(FunctionName="aerocene-dev-hello", InvocationType='RequestResponse',
+        Payload=json.dumps(str(i)))
+        string_response += response["Payload"].read().decode('utf-8')
+
+    #console.log("end of the for loop")
+    response = {
+        "statusCode": 200,
+        "body": string_response
+    }
+    #print(final)
+    return response
+
 
 #print(hello(None, None))

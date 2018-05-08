@@ -4,15 +4,23 @@ provider:
   name: aws
   runtime: python3.6
   timeout: 150
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+      Resource: "*"
 
 
 functions:
   hello:
     handler: handler.hello
+  cron_launcher:
+    handler: handler.cron_launcher
     events:
-      - http:
-          path: hello
-          method: get
+      - schedule: rate(1 minute)
+
+
 plugins:
   - serverless-python-requirements
 
