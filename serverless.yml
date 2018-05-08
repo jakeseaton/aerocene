@@ -4,7 +4,7 @@ provider:
   name: aws
   runtime: python3.6
   timeout: 150
-  region: us-east-1
+  region: us-east-2
   iamRoleStatements:
     - Effect: Allow
       Action:

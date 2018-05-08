@@ -6,8 +6,9 @@ import random
 import json
 import boto3
 import asyncio
+import threading
 
-
+# Rotates through proxy ips and sends requests to API. 
 def hello(event, context):
     ua = UserAgent(verify_ssl=False)
     proxies = []
@@ -27,13 +28,17 @@ def hello(event, context):
             'port': row.find_all('td')[1].string
         })
 
+    # Picking random proxy to use.
     proxy_index = random.randint(0, len(proxies) - 1)
     proxy = proxies[proxy_index]
 
     final = ''
-    #Test with icanhazip.com (returns proxied ip address)
-    for n in range(0, 2):
-        print("First request")
+
+    # Replace this with insta/dynamoDB scraping.
+    # Tested with icanhazip.com API (returns proxied ip address).
+    for n in range(0, 15):
+        console.log("request number: ", n)
+        # Request to icanhazip, which returns IP address to be used.
         req = Request('http://icanhazip.com')
         req.set_proxy(proxy['ip'] + ':' + proxy['port'], 'http')
 
@@ -56,27 +61,26 @@ def hello(event, context):
         "statusCode": 200,
         "body": final
     }
-    #print(final)
     return response
 
+# Main function.
 def cron_launcher(event, context):
-    lambda_client = boto3.client('lambda', region_name="us-east-1")
-    #console.log("start of the for loop")
+    lambda_client = boto3.client('lambda', region_name="us-east-2")
     string_response = ''
 
     lst = list(range(4))
+    # Where the multithreading/concurrency should occur...
+    # Use either threading, multiprocessing, or concurrent futures (if return type needed)
+    # If note, InvocationType 'Event' is fine.
     for i in lst:
-        response = lambda_client.invoke(FunctionName="aerocene-dev-hello", InvocationType='RequestResponse',
+        t = threading.Thread(target=hello, args=(i,))
+        lambda_client.invoke(FunctionName="aerocene-dev-hello", InvocationType='Event',
         Payload=json.dumps(str(i)))
-        string_response += response["Payload"].read().decode('utf-8')
+        string_response += str(i)
+        #string_response += response["Payload"].read().decode('utf-8')
 
-    #console.log("end of the for loop")
     response = {
         "statusCode": 200,
         "body": string_response
     }
-    #print(final)
     return response
-
-
-#print(hello(None, None))
