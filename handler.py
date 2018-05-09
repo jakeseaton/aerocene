@@ -2,13 +2,14 @@ from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 import random
+from concurrent.futures import ThreadPoolExecutor
 
+import time
 import json
 import boto3
-import asyncio
 import threading
 
-# Rotates through proxy ips and sends requests to API. 
+# Rotates through proxy ips and sends requests to API.
 def hello(event, context):
     ua = UserAgent(verify_ssl=False)
     proxies = []
@@ -36,8 +37,9 @@ def hello(event, context):
 
     # Replace this with insta/dynamoDB scraping.
     # Tested with icanhazip.com API (returns proxied ip address).
-    for n in range(0, 15):
-        console.log("request number: ", n)
+    for n in range(0, 5):
+        print(n)
+        # time.sleep(0.25)
         # Request to icanhazip, which returns IP address to be used.
         req = Request('http://icanhazip.com')
         req.set_proxy(proxy['ip'] + ':' + proxy['port'], 'http')
@@ -56,7 +58,8 @@ def hello(event, context):
             #print('Proxy ' + proxy['ip'] + ':' + proxy['port'] + ' deleted.')
             proxy_index = random.randint(0, len(proxies) - 1)
             proxy = proxies[proxy_index]
-    final += event
+    #final += event
+    print(final)
     response = {
         "statusCode": 200,
         "body": final
@@ -64,23 +67,70 @@ def hello(event, context):
     return response
 
 # Main function.
+# def cron_launcher(event, context):
+#     lambda_client = boto3.client('lambda', region_name="us-east-2")
+#     string_response = ''
+#
+#     lst = list(range(4))
+#     # Where the multithreading/concurrency should occur...
+#     # Use either threading, multiprocessing, or concurrent futures (if return type needed)
+#     # If note, InvocationType 'Event' is fine.
+#     for i in lst:
+#         t = threading.Thread(target=hello, args=(i,))
+#         lambda_client.invoke(FunctionName="aerocene-dev-hello", InvocationType='ReqeuestResponse',
+#         Payload=json.dumps(str(i)))
+#         string_response += str(i)
+#         #string_response += response["Payload"].read().decode('utf-8')
+#
+#     response = {
+#         "statusCode": 200,
+#         "body": string_response
+#     }
+#     return response
+
+# Futures approach.
 def cron_launcher(event, context):
     lambda_client = boto3.client('lambda', region_name="us-east-2")
     string_response = ''
-
-    lst = list(range(4))
-    # Where the multithreading/concurrency should occur...
-    # Use either threading, multiprocessing, or concurrent futures (if return type needed)
-    # If note, InvocationType 'Event' is fine.
-    for i in lst:
-        t = threading.Thread(target=hello, args=(i,))
-        lambda_client.invoke(FunctionName="aerocene-dev-hello", InvocationType='Event',
-        Payload=json.dumps(str(i)))
-        string_response += str(i)
-        #string_response += response["Payload"].read().decode('utf-8')
-
+    results = []
+    futs = []
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        print("does this enter?")
+        for x in range(0, 4):
+            futs.append(
+                executor.submit(lambda_client.invoke,
+                    FunctionName = "aerocene-dev-hello",
+                    InvocationType = "RequestResponse",
+                    Payload = json.dumps(str(x))
+                )
+                # executor.submit(hello, None, None)
+            )
+        results = [fut.result() for fut in futs]
+    print(len(results[0]))
+    stuff = str(results[0])
     response = {
         "statusCode": 200,
-        "body": string_response
+        "body": stuff
     }
     return response
+
+# def cron_launcher(event, context):
+#     lambda_client = boto3.client('lambda', region_name="us-east-2")
+#     string_response = ''
+#
+#     lst = list(range(4))
+#     for i in lst:
+#         t = threading.Thread(target=lambda_client.invoke, args=(FunctionName="aerocene-dev-hello",))
+#         lambda_client.invoke(FunctionName="aerocene-dev-hello", InvocationType='ReqeuestResponse',
+#         Payload=json.dumps(str(i)))
+#         string_response += str(i)
+#         #string_response += response["Payload"].read().decode('utf-8')
+#
+#     response = {
+#         "statusCode": 200,
+#         "body": string_response
+#     }
+#     return response
+
+
+print(cron_launcher(None, None))
