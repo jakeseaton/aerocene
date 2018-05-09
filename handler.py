@@ -114,15 +114,21 @@ def cron_launcher(event, context):
     }
     return response
 
+# Multithreaded? - syntax isn't working.
 # def cron_launcher(event, context):
 #     lambda_client = boto3.client('lambda', region_name="us-east-2")
 #     string_response = ''
 #
 #     lst = list(range(4))
 #     for i in lst:
-#         t = threading.Thread(target=lambda_client.invoke, args=(FunctionName="aerocene-dev-hello",))
-#         lambda_client.invoke(FunctionName="aerocene-dev-hello", InvocationType='ReqeuestResponse',
-#         Payload=json.dumps(str(i)))
+#         # t = threading.Thread(target=lambda_client.invoke, args=(FunctionName="aerocene-dev-hello",
+#         #     InvocationType + "RequestResponse"
+#         #
+#         # ))
+#         t = threading.Thread(target=lambda_client.invoke, args=(FunctionName="hello",
+#         InvocationType="RequestResponse",Payload=json.dumps(str(i))))
+#         # lambda_client.invoke(FunctionName="aerocene-dev-hello", InvocationType='RequestResponse',
+#         # Payload=json.dumps(str(i)))
 #         string_response += str(i)
 #         #string_response += response["Payload"].read().decode('utf-8')
 #
