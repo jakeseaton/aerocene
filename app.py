@@ -49,30 +49,56 @@ def blacklist(*args, **kwargs):
     return
 
 def test_lisa(*args, **kwargs):
-    address = "1234"
-    return get_or_create_address(address)
+    address = "12346"
+    get_or_create_address(address)
+    increment_requests_for_address(address)
+    blacklist_address(address)
+    return get_address(address)
 
-def get_or_create_address(address):
-    response = client.get_item(
+
+def get_address(address):
+    return client.get_item(
         TableName=REQUEST_TABLE,
         Key={
             'address': { 'S': address }
         }
     )
-    if response.get("Item", {}):
-        return response.get("Item")
 
-    response = client.put_item(
+def get_or_create_address(address):
+
+    if get_address(address).get("Item", {}):
+        return get_address(address)
+
+    client.put_item(
         TableName=REQUEST_TABLE,
         Item={
             'address': { 'S': address },
-            'count': {'N': str(0)}
+            'request_count': {'N': str(0)},
+            'blacklisted': {'BOOL': False}
         },
         ReturnValues="ALL_OLD"
     )
 
-    return response
+    return get_address(address)
 
+def blacklist_address(address):
+    return client.update_item(
+        TableName=REQUEST_TABLE,
+        Key={ 'address': {'S': address} },
+        UpdateExpression= 'SET blacklisted = :new',
+        ExpressionAttributeValues={":new": {'BOOL': True}},
+        ReturnValues="ALL_OLD"
+    )
+
+
+def increment_requests_for_address(address):
+    return client.update_item(
+        TableName=REQUEST_TABLE,
+        Key={ 'address': {'S': address} },
+        UpdateExpression= 'SET request_count = request_count + :num',
+        ExpressionAttributeValues={":num": {"N": "1"}},
+        ReturnValues="UPDATED_NEW"
+    )
 
 
 def generate_unique_scrape_id():
