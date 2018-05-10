@@ -19,7 +19,11 @@
   "devDependencies": {
     "serverless-dynamodb-local": "^0.2.28",
     "serverless-offline": "^3.20.1",
+    "serverless-plugin-simulate": "0.0.17",
     "serverless-python-requirements": "^4.0.0",
     "serverless-wsgi": "^1.4.7"
+  },
+  "dependencies": {
+    "request": "^2.85.0"
   }
 }

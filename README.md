@@ -131,3 +131,6 @@ just sends a request to a server or localhost and then deploy it and see how oft
 Can we scrape just linkedin profile pictures?
 
 Or senior photos on instagram somehow?
+
+
+To run the trial make sure you have sls dynamodb start --migrate running locally

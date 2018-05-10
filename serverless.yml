@@ -7,15 +7,18 @@ plugins:
   - serverless-python-requirements
   - serverless-wsgi
   - serverless-dynamodb-local
+  - serverless-plugin-simulate
 
 custom:
-  tableName: 'users-table-${self:provider.stage}'
-  instagramUserTableName: 'instagram-users-table-${self:provider.stage}'
+  scrapeTableName: 'scrape-table-${self:provider.stage}'
   instagramPostTableName: 'instagram-post-table-${self:provider.stage}'
   instagramCursorTableName: 'instagram-cursor-table-${self:provider.stage}'
+
+
   wsgi:
     app: app.app
     packRequirements: false
+
   pythonRequirements:
     dockerizePip: non-linux
     zipImport: true
@@ -26,32 +29,25 @@ provider:
   stage: dev
   region: us-east-1
   iamRoleStatements:
-    # Can you collapse these into one? Declaring this effect for
-    # all resources?
+
+    # allow all actions on the posts table
     - Effect: Allow
       Action:
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
+        - "*"
       Resource:
-        - { "Fn::GetAtt": ["UsersDynamoDBTable", "Arn" ] }
+        - { "Fn::GetAtt": ["InstagramPostDynamoDBTable", "Arn"] }
     - Effect: Allow
       Action:
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
+        - "*"
       Resource:
-        - { "Fn::GetAtt": ["InstagramUsersDynamoDBTable", "Arn" ] }
-      # NEED TO SPECIFY THESE FOR NEW TABLES IF STUFF ISNT WORKING
+        - { "Fn::GetAtt": ["InstagramCursorDynamoDbTable", "Arn"] }
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+        - lambda:InvokeAsync
+      Resource: "*"
   environment:
-    USERS_TABLE: ${self:custom.tableName}
-    INSTAGRAM_USERS_TABLE: ${self:custom.instagramUserTableName}
+    SCRAPE_TABLE: ${self:custom.scrapeTableName}
     INSTAGRAM_POST_TABLE: ${self:custom.instagramPostTableName}
     INSTAGRAM_CURSOR_TABLE: ${self:custom.instagramCursorTableName}
 
@@ -65,8 +61,22 @@ functions:
     handler: wsgi.handler
     events:
       - http: 'POST /posts'
-  hello:
-    handler: functions.hello
+  # hello:
+  #   handler: functions.hello
+  derp:
+    handler: functions.derp
+  schmerp:
+    handler: app.schmerp
+  herp:
+    handler: functions.herp
+    events:
+      - stream:
+          type: dynamodb
+          batchSize: 1
+          arn:
+            Fn::GetAtt:
+              - InstagramCursorDynamoDbTable
+              - StreamArn
 
   scrapeInstagram:
     handler: wsgi.handler
@@ -76,13 +86,23 @@ functions:
 
 resources:
   Resources:
-    InstagramUsersDynamoDBTable:
-      Type: 'AWS::DynamoDB::Table'
+    ScrapeDynamoDbTable:
+      Type: AWS::DynamoDB::Table
       Properties:
+        TableName: ${self:custom.scrapeTableName}
         AttributeDefinitions:
           -
             AttributeName: id
-            AttributeType: S
+            AttributeType: N
+          # -
+          #   AttributeName: start_page
+          #   AttributeType: N
+          # -
+          #   AttributeName: end_page
+          #   AttributeType: N
+          # -
+          #   AttributeName: location
+          #   AttributeType: N
         KeySchema:
           -
             AttributeName: id
@@ -90,23 +110,8 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-        TableName: ${self:custom.instagramUserTableName}
-
-    UsersDynamoDBTable:
-      Type: 'AWS::DynamoDB::Table'
-      Properties:
-        AttributeDefinitions:
-          -
-            AttributeName: userId
-            AttributeType: S
-        KeySchema:
-          -
-            AttributeName: userId
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-        TableName: ${self:custom.tableName}
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
 
     InstagramCursorDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
@@ -126,6 +131,12 @@ resources:
             ReadCapacityUnits: 1
             WriteCapacityUnits: 1
 
+        # create a stream for this table
+        StreamSpecification:
+          # enable the stream
+          # make it so that the handler receives
+          # the old and new versions of each item
+          StreamViewType: NEW_AND_OLD_IMAGES
 
     InstagramPostDynamoDBTable:
       Type: 'AWS::DynamoDB::Table'
@@ -144,5 +155,36 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+    # InstagramUsersDynamoDBTable:
+    #   Type: 'AWS::DynamoDB::Table'
+    #   Properties:
+    #     AttributeDefinitions:
+    #       -
+    #         AttributeName: id
+    #         AttributeType: S
+    #     KeySchema:
+    #       -
+    #         AttributeName: id
+    #         KeyType: HASH
+    #     ProvisionedThroughput:
+    #       ReadCapacityUnits: 1
+    #       WriteCapacityUnits: 1
+    #     TableName: ${self:custom.instagramUserTableName}
+
+    # UsersDynamoDBTable:
+    #   Type: 'AWS::DynamoDB::Table'
+    #   Properties:
+    #     AttributeDefinitions:
+    #       -
+    #         AttributeName: userId
+    #         AttributeType: S
+    #     KeySchema:
+    #       -
+    #         AttributeName: userId
+    #         KeyType: HASH
+    #     ProvisionedThroughput:
+    #       ReadCapacityUnits: 1
+    #       WriteCapacityUnits: 1
+    #     TableName: ${self:custom.tableName}
 
 
