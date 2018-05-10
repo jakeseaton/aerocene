@@ -8,10 +8,12 @@ import queries
 This file contains lambda handlers and their helper functions.
 '''
 
+
 def derp(*args, **kwargs):
-    scrape_id = queries.create_scrape(0,1,1234)
+    scrape_id = queries.create_scrape(0, 1, 1234)
     queries.increment_progress_and_cursor(scrape_id, "asdf")
     return queries.get_scrape(scrape_id)
+
 
 def trial(event, context):
     location = 44961364
@@ -19,13 +21,16 @@ def trial(event, context):
     print("Yo waddup")
     return {}
 
+
 def get_cursor(scrape):
     return scrape.get("end_cursor", {'S': ''})['S']
+
 
 def scrape_is_complete(scrape):
     end_page = scrape['end_page']['N']
     progress = scrape['progress']['N']
     return progress == end_page or int(progress) > int(end_page)
+
 
 def check_if_scrape_is_complete(scrape_id):
     scrape = queries.get_scrape(scrape_id).get("Item")
@@ -48,7 +53,7 @@ def scrape_next_page(scrape):
         # do nothing
         return
 
-    response = instagram.scrape({ 'location': location, 'cursor': cursor }, {})
+    response = instagram.scrape({'location': location, 'cursor': cursor}, {})
 
     new_cursor = response['cursor']
 
@@ -59,8 +64,6 @@ def scrape_next_page(scrape):
 
     # insert the responses of this
     queries.insert_posts(response['data'])
-
-
 
 
 def scrape_stream_handler(event, context):
@@ -79,6 +82,7 @@ def scrape_stream_handler(event, context):
             # otherwise this is probably just a progress update
     return {}
 
+
 def cursor_stream_handler(event, context):
     # print(event)
     records = event.get("Records", [])
@@ -89,7 +93,6 @@ def cursor_stream_handler(event, context):
             cursor = new_cursor['cursor']['S']
             location = new_cursor['location']['S']
 
-
     return event
-            # invoke a different lambda function
-            # lambda_invoke(scrape_cursor(...))
+    # invoke a different lambda function
+    # lambda_invoke(scrape_cursor(...))
