@@ -9,6 +9,7 @@ import settings
 from datetime import datetime
 import json
 import queries
+import functions
 
 app = Flask(__name__)
 
@@ -45,36 +46,57 @@ def scrape_is_done(scrape_id):
     scrape = queries.get_scrape(scrape_id).get("Item")
     return scrape.get("progress").get("N") == scrape.get("end_page").get("N")
 
-# this isn't going to work because lambda can't
-# run for more than six seconds
-def wait_for_scrape(*args, **kwargs):
-    start_page = kwargs.get("start_page", 0)
-    end_page = kwargs.get("end_page", 1)
 
-    print("Starting on page", start_page)
-    print("Ending on page", end_page)
-
-    scrape_id = queries.create_scrape(start_page, end_page)
-    return scrape_id
-    while not scrape_is_done(unique_id):
-        print("Scrape not done yet")
-        # print(increment_scrape_progress(unique_id))
-        time.sleep(1)
-    print("Scrape finished")
-
-    return get_scrape(unique_id)
-
-    print(client.describe_table(TableName=INSTAGRAM_CURSOR_TABLE))
-
-@app.route('/batch_scrape', methods=['POST'])
+@app.route('/batch_scrape', methods=['GET'])
 def batch_scrape(*args, **kwargs):
+
+    location = request.args.get("location", 44961364)
+    start_page = request.args.get("start_page", 0)
+    end_page = request.args.get("end_page", 1)
+    scrape_id = queries.create_scrape(start_page, end_page, location)
+
+    return jsonify({
+        "status": "success",
+        "message": "Batch scraping job was created successfully",
+        "scrape_id": scrape_id,
+        "location": location,
+        "start_page": start_page,
+        "end_page": end_page,
+    })
+
+@app.route("/is_scrape_complete", methods=['GET'])
+def is_scrape_complete(*args, **kwargs):
+    scrape_id = request.args.get("scrape_id", "")
+
+    if not scrape_id:
+        return jsonify({ "error": "You must specify a scrape_id to check" })
+
+    return jsonify({
+        "scrape_id": scrape_id,
+        "is_complete": functions.check_if_scrape_is_complete(scrape_id)
+    })
+
+@app.route('/create_batch_scrape', methods=['POST'])
+def batch_scrape_post(*args, **kwargs):
     print(args, kwargs)
     print(request.form)
+    location = request.form.get("location", 44961364)
     start_page = request.form.get("start_page", 0)
-    end_page = request.form.get("end_page", 1)
+    end_page = request.form.get("end_page", 2)
+    scrape_id = queries.create_scrape(start_page, end_page, location)
 
-    return wait_for_scrape(start_page=start_page, end_page=end_page)
+    return jsonify({ "scrape_id": scrape_id })
+#     return wait_for_scrape(start_page=start_page, end_page=end_page, location=location)
+# return scrape_id
+#     while not scrape_is_done(unique_id):
+#         print("Scrape not done yet")
+#         # print(increment_scrape_progress(unique_id))
+#         time.sleep(1)
+#     print("Scrape finished")
 
+#     return get_scrape(unique_id)
+
+#     print(client.describe_table(TableName=INSTAGRAM_CURSOR_TABLE))
     # resp = client.put_item(
     #     TableName=INSTAGRAM_POST_TABLE,
     #     Item={
@@ -95,13 +117,14 @@ def batch_scrape(*args, **kwargs):
 @app.route("/create_cursor", methods=["GET"])
 def create_cursor(*args, **kwargs):
     cursor = request.args.get('cursor', '')
+    location = request.args.get('')
     queries.insert_cursor(cursor)
     return jsonify(queries.get_cursor(cursor))
 
 # the main url we care about
 @app.route('/scrape_instagram', methods=['GET'])
 def scrape_instagram(*args, **kwargs):
-    from functions import scrape_instagram_web
+
 
     # get the location and cursor from the get parameters
     # of the request
@@ -113,7 +136,7 @@ def scrape_instagram(*args, **kwargs):
         # return an error
         return jsonify({'error': 'You must specify a location or an end cursor to scrape.'})
 
-    result = scrape_instagram_web({ 'location': location, 'cursor': cursor}, {})
+    result = functions.scrape_instagram_web({ 'location': location, 'cursor': cursor}, {})
 
     # print("The returned cursor was", result['cursor'])
 

@@ -7,7 +7,6 @@ plugins:
   - serverless-python-requirements
   - serverless-wsgi
   - serverless-dynamodb-local
-  - serverless-plugin-simulate
 
 custom:
   scrapeTableName: 'scrape-table-${self:provider.stage}'
@@ -33,14 +32,25 @@ provider:
     # allow all actions on the posts table
     - Effect: Allow
       Action:
-        - "*"
+        - "dynamodb:*"
       Resource:
         - { "Fn::GetAtt": ["InstagramPostDynamoDBTable", "Arn"] }
     - Effect: Allow
       Action:
-        - "*"
+        - "dynamodb:*"
       Resource:
         - { "Fn::GetAtt": ["InstagramCursorDynamoDbTable", "Arn"] }
+    - Effect: Allow
+      Action:
+        - "dynamodb:*"
+      Resource:
+        - { "Fn::GetAtt": ["ScrapeDynamoDbTable", "Arn"] }
+    - Effect: Allow
+      Action:
+        - "dynamodb:*"
+      Resource:
+        - { "Fn::GetAtt": ["RequestDynamoDbTable", "Arn"] }
+
     - Effect: Allow
       Action:
         - lambda:InvokeFunction
@@ -59,32 +69,44 @@ functions:
     events:
       - http: ANY /
       - http: 'ANY {proxy+}'
-
-  wait_for_scrape:
-    handler: app.wait_for_scrape
-
-  # function to handle the stream of instagram cursors
-  cursorStream:
-    handler: functions.cursor_stream_handler
+  # derp:
+  #   handler: functions.derp
+  scrapeStream:
+    handler: functions.scrape_stream_handler
     events:
       - stream:
           type: dynamodb
           batchSize: 1
           arn:
             Fn::GetAtt:
-              - InstagramCursorDynamoDbTable
+              - ScrapeDynamoDbTable
               - StreamArn
+  trial:
+    handler: functions.trial
 
-  scrapeStream:
-    handler: functions.scrape_stream_handler
-    events:
-      - stream:
-        type: dynamodb
-        batchSize: 1
-        arn:
-          Fn::GetAtt:
-            - ScrapeDynamoDbTable
-            - StreamArn
+  # function to handle the stream of instagram cursors
+  # cursorStream:
+  #   handler: functions.cursor_stream_handler
+  #   events:
+  #     - stream:
+  #         type: dynamodb
+  #         batchSize: 1
+  #         arn:
+  #           Fn::GetAtt:
+  #             - InstagramCursorDynamoDbTable
+  #             - StreamArn
+
+
+  # scrapeStream:
+  #   handler: functions.scrape_stream_handler
+  #   events:
+  #     - stream:
+  #       type: dynamodb
+  #       batchSize: 1
+  #       arn:
+  #         Fn::GetAtt:
+  #           - ScrapeDynamoDbTable
+  #           - StreamArn
 
 resources:
   Resources:

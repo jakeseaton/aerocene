@@ -3,10 +3,9 @@ import boto3
 import settings
 import os
 import datetime
-DEBUG = settings.DEBUG
 
 # if we're running locally
-if DEBUG:
+if settings.DEBUG:
     # connect to the local instance of dynamo
     client = boto3.client('dynamodb', endpoint_url='http://localhost:8000', region_name='us-west-2')
     lambda_client = boto3.client("lambda", endpoint_url="http://localhost:4000", region_name='us-west-2')
@@ -70,7 +69,7 @@ def generate_unique_scrape_id():
     # this is the worst possible way to do this
     return client.describe_table(TableName=SCRAPE_TABLE)["Table"]["ItemCount"] + 1
 
-def create_scrape(start_page, end_page):
+def create_scrape(start_page, end_page, location):
     scrape_id = generate_unique_scrape_id()
     client.put_item(
         TableName=SCRAPE_TABLE,
@@ -79,14 +78,20 @@ def create_scrape(start_page, end_page):
             'start_page': { 'N': str(start_page) },
             'end_page': { 'N': str(end_page) },
             'progress': { 'N': str(0) },
+            'location': { 'S': str(location) },
+            # you can't have empty strings in dynamodb which is
+            # laaaame
+            # 'cursor': { 'S': '' },
         }
     )
+    return scrape_id
 
 def get_scrape(scrape_id):
     return client.get_item(
         TableName=SCRAPE_TABLE,
         Key={ 'id': {'N': str(scrape_id)} },
     )
+
 def increment_scrape_progress(scrape_id):
     print("Incrementing progress for scrape with id", scrape_id)
     return client.update_item(
@@ -95,6 +100,19 @@ def increment_scrape_progress(scrape_id):
         UpdateExpression= 'SET progress = progress + :num',
         ExpressionAttributeValues={":num": {"N": "1"}},
         ReturnValues="UPDATED_NEW"
+    )
+
+def increment_progress_and_cursor(scrape_id, cursor):
+    print("Updating progress for scrape with id", scrape_id, "New Cursor", cursor)
+    return client.update_item(
+        TableName=SCRAPE_TABLE,
+        Key={'id': {'N': str(scrape_id)}},
+        UpdateExpression="SET progress=progress + :num, end_cursor = :end_cursor",
+        ExpressionAttributeValues={
+            ":num": {"N": "1"},
+            ":end_cursor": {"S": str(cursor)}
+        },
+        ReturnValues="UPDATED_NEW",
     )
 
 def update_scrape_progress(scrape_id, old_progress, new_progress):
@@ -111,15 +129,21 @@ def update_scrape_progress(scrape_id, old_progress, new_progress):
         ReturnValues="UPDATED_NEW"
     )
 
-def insert_cursor(cursor):
+def insert_cursor(cursor, location):
     return client.put_item(
         TableName=INSTAGRAM_CURSOR_TABLE,
         Item={
             'cursor': { 'S': cursor },
             'created': { 'S': str(datetime.datetime.now()) },
-            'scraped': { 'BOOL': False }
+            'scraped': { 'BOOL': False },
+            'location': { 'S': str(location) }
         }
     )
+
+def insert_posts(posts):
+    for post in posts:
+        # print("This is a post")
+        pass
 
 def get_cursor(cursor):
     return client.get_item(
