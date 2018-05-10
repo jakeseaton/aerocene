@@ -38,7 +38,7 @@ def create_proxy_dict(proxy):
         # 'https:': 'http://%s:%s' % (proxy['ip'], proxy['port'])
     }
 
-def hello(event, context):
+def rotate_proxies(event, context):
     proxies = get_proxies()
 
     # Picking random proxy to use.
@@ -87,28 +87,6 @@ def hello(event, context):
     }
     return response
 
-# Main function.
-# def cron_launcher(event, context):
-#     lambda_client = boto3.client('lambda', region_name="us-east-2")
-#     string_response = ''
-#
-#     lst = list(range(4))
-#     # Where the multithreading/concurrency should occur...
-#     # Use either threading, multiprocessing, or concurrent futures (if return type needed)
-#     # If note, InvocationType 'Event' is fine.
-#     for i in lst:
-#         t = threading.Thread(target=hello, args=(i,))
-#         lambda_client.invoke(FunctionName="aerocene-dev-hello", InvocationType='ReqeuestResponse',
-#         Payload=json.dumps(str(i)))
-#         string_response += str(i)
-#         #string_response += response["Payload"].read().decode('utf-8')
-#
-#     response = {
-#         "statusCode": 200,
-#         "body": string_response
-#     }
-#     return response
-
 # Futures approach.
 def cron_launcher(event, context):
     lambda_client = boto3.client('lambda', region_name="us-east-2")
@@ -119,7 +97,7 @@ def cron_launcher(event, context):
         print("does this enter?")
         for x in range(0, 3):
             futs.append(
-                executor.submit(hello, None, None)
+                executor.submit(rotate_proxies, None, None)
             )
         results = [fut.result() for fut in futs]
     print(len(results[0]))
