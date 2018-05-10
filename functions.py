@@ -4,6 +4,10 @@ import os
 import instagram
 import queries
 
+'''
+This file contains lambda handlers and their helper functions.
+'''
+
 def derp(*args, **kwargs):
     scrape_id = queries.create_scrape(0,1,1234)
     queries.increment_progress_and_cursor(scrape_id, "asdf")
@@ -57,20 +61,7 @@ def scrape_next_page(scrape):
     queries.insert_posts(response['data'])
 
 
-def cursor_stream_handler(event, context):
-    # print(event)
-    records = event.get("Records", [])
-    for record in records:
-        if record['eventName'] == "INSERT":
-            # extract the new cursor from the event
-            new_cursor = record['dynamodb']['NewImage']
-            cursor = new_cursor['cursor']['S']
-            location = new_cursor['location']['S']
 
-
-    return event
-            # invoke a different lambda function
-            # lambda_invoke(scrape_cursor(...))
 
 def scrape_stream_handler(event, context):
     # print(event)
@@ -88,13 +79,17 @@ def scrape_stream_handler(event, context):
             # otherwise this is probably just a progress update
     return {}
 
-
-def herp(event, context):
+def cursor_stream_handler(event, context):
+    # print(event)
     records = event.get("Records", [])
-    print(records)
-    # assert(len(records) == 1, "Too many records %s" % records)
     for record in records:
         if record['eventName'] == "INSERT":
-            new_cursor = record['dynamodb']
+            # extract the new cursor from the event
+            new_cursor = record['dynamodb']['NewImage']
+            cursor = new_cursor['cursor']['S']
+            location = new_cursor['location']['S']
 
-            return new_cursor['NewImage']['cursor']['S']
+
+    return event
+            # invoke a different lambda function
+            # lambda_invoke(scrape_cursor(...))

@@ -56,8 +56,7 @@ functions:
     events:
       - http: ANY /
       - http: 'ANY {proxy+}'
-  # derp:
-  #   handler: functions.derp
+
   scrapeStream:
     handler: functions.scrape_stream_handler
     events:
@@ -70,30 +69,6 @@ functions:
               - StreamArn
   trial:
     handler: functions.trial
-
-  # function to handle the stream of instagram cursors
-  # cursorStream:
-  #   handler: functions.cursor_stream_handler
-  #   events:
-  #     - stream:
-  #         type: dynamodb
-  #         batchSize: 1
-  #         arn:
-  #           Fn::GetAtt:
-  #             - InstagramCursorDynamoDbTable
-  #             - StreamArn
-
-
-  # scrapeStream:
-  #   handler: functions.scrape_stream_handler
-  #   events:
-  #     - stream:
-  #       type: dynamodb
-  #       batchSize: 1
-  #       arn:
-  #         Fn::GetAtt:
-  #           - ScrapeDynamoDbTable
-  #           - StreamArn
 
 resources:
   Resources:

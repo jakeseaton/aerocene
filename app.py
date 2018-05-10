@@ -1,7 +1,4 @@
-# app.py
-
 import os
-
 import boto3
 import time
 from flask import Flask, jsonify, request
@@ -11,6 +8,11 @@ import json
 import queries
 import functions
 import instagram
+
+'''
+This file implements a flask server
+that is deployed as a single lambda function.
+'''
 
 app = Flask(__name__)
 
