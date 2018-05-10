@@ -6,7 +6,6 @@ SCRAPE_URL = settings.PRODUCTION_URL + "/scrape_instagram?location={0}&cursor={1
 
 def lamdba_scrape(pages, page_size):
     print("Scraping %s pages of size %s using Lambda" % (pages, page_size))
-
     cursor = ""
     # records = set()
     # duplicates = 0
