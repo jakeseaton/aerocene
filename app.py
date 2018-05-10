@@ -35,7 +35,7 @@ def hello(*args, **kwargs):
 
 # functions that implement Lisa's adversarial server
 @app.route("/rate_limit")
-def rate_limit(*args, **kwargs, address, request_count):
+def rate_limit(request_count, *args, **kwargs):
     MAX_REQUESTS = 10
     if request_count >= MAX_REQUESTS:
         print("429 Too Many Requests. Try again later.")
@@ -44,7 +44,7 @@ def rate_limit(*args, **kwargs, address, request_count):
     return jsonify({'success': True})
 
 @app.route("/backoff")
-def backoff(*args, **kwargs, address, request_count):
+def backoff(request_count, *args, **kwargs):
     MAX_REQUESTS = 10 
     if request_count >= MAX_REQUESTS:
         print("429 Too Many Requests. Try again later.")
@@ -55,7 +55,7 @@ def backoff(*args, **kwargs, address, request_count):
     return jsonify({'success': True})
 
 @app.route("/blacklist")
-def blacklist(*args, **kwargs, address, request_count):
+def blacklist(address, request_count, *args, **kwargs):
     MAX_REQUESTS = 10 
     if request_count >= MAX_REQUESTS:
         print("429 Too Many Requests. You have been blacklisted 4ever.")
@@ -68,14 +68,14 @@ def test_lisa(*args, **kwargs):
     address = "12346"
     test = 1 # 1 for rate-limiting, 2 for exponential backoff, 3 for blacklisting 
     record = get_or_create_address(address)
-    request_count = record.request_count
+    request_count = int(record.request_count)
     increment_requests_for_address(address)
 
     if test == 1: # rate-limiting 
-        rate_limit(address, request_count)
+        rate_limit(request_count)
 
     if test == 2: # exponential backoff 
-        backoff(address, request_count)
+        backoff(request_count)
 
     if test == 3: # blacklisting 
         blacklist(address, request_count)
