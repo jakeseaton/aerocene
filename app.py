@@ -4,7 +4,9 @@ import time
 from flask import Flask, jsonify, request
 import settings
 from datetime import datetime
+import time
 import json
+import random
 import queries
 import functions
 import instagram
@@ -16,8 +18,6 @@ that is deployed as a single lambda function.
 app = Flask(__name__)
 
 # index
-
-
 @app.route("/")
 def hello(*args, **kwargs):
     return jsonify({ "status": "live", "message": "Welcome to Aerocene!" })
@@ -25,29 +25,70 @@ def hello(*args, **kwargs):
 # functions that implement Lisa's adversarial server
 @app.route("/rate_limit")
 def rate_limit(*args, **kwargs):
-    # TODO LISA
-    return jsonify({'success': True})
+    # extract the ip address from the request
+    address = request.remote_addr
+    print("Address", address)
+
+    # get or create a record for this address
+    record = queries.get_or_create_address(address)['Item']
+
+    # determine how many requests have been sent by this
+    # address
+    request_count = record.get("request_count")["N"]
+
+    # if that's greater than the max we allow per address
+    if int(request_count) >= settings.MAX_REQUESTS_PER_ADDRESS:
+
+        # bye felicia
+        return jsonify({
+            "error": "429 Too Many Requests. Try again later."
+        })
+
+    # else increment the counter
+    queries.increment_requests_for_address(address)
+
+    # and return the updated record
+    return jsonify(queries.get_address(address).get("Item"))
 
 
 @app.route("/backoff")
 def backoff(*args, **kwargs):
-    # TODO LISA
-    return jsonify({'success': True})
+
+    address = request.remote_addr
+    print("Address", address)
+
+    record = queries.get_or_create_address(address).get("Item")
+
+    request_count = int(record.get("request_count").get("N"))
+
+    # if they've sent more requests than we allow per address
+    if int(request_count) >= settings.MAX_REQUESTS_PER_ADDRESS:
+        extra_requests = request_count - settings.MAX_REQUESTS_PER_ADDRESS
+        # backoff exponentially
+        time.sleep(2 ** extra_requests)
+
+
+    queries.increment_requests_for_address(address)
+
+    return jsonify(queries.get_address(address).get("Item"))
 
 
 @app.route("/blacklist")
 def blacklist(*args, **kwargs):
-    # TODO LISA
-    return
+    address = request.remote_addr
+    print("Address", address)
 
+    record = queries.get_or_create_address(address).get("Item")
 
-def test_lisa(*args, **kwargs):
-    address = "12346"
-    queries.get_or_create_address(address)
+    request_count = int(record.get("request_count").get("N"))
+
+    # if they've sent more requests than we allow per address
+    if int(request_count) >= settings.MAX_REQUESTS_PER_ADDRESS:
+        queries.blacklist_address(address)
+        return jsonify({ "error": "403 Forbidden", "blacklisted": True })
+
     queries.increment_requests_for_address(address)
-    queries.blacklist_address(address)
-    return get_address(address)
-    # could alternatively use the instagram implementation
+    return jsonify(queries.get_address(address).get("Item"))
 
 
 def scrape_is_done(scrape_id):
