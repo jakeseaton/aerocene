@@ -85,12 +85,21 @@ def increment_requests_for_address(address):
     )
 
 
+def reset_requests_for_address(address):
+    return client.update_item(
+        Key={'address': {'S': address}},
+        UpdateExpression='SET request_count = :num',
+        ExpressionAttributeValues={":num": {"N": "0"}},
+        ReturnValues="UPDATED_NEW"
+    )
+
+
 def generate_unique_scrape_id():
     # this is the worst possible way to do this
     return client.describe_table(TableName=SCRAPE_TABLE)["Table"]["ItemCount"] + 1
 
 
-def create_scrape(start_page, end_page, location):
+def create_scrape(start_page, end_page, location=settings.DEFAULT_LOCATION, page_size=settings.PAGE_SIZE):
     scrape_id = generate_unique_scrape_id()
     client.put_item(
         TableName=SCRAPE_TABLE,
@@ -100,6 +109,7 @@ def create_scrape(start_page, end_page, location):
             'end_page': {'N': str(end_page)},
             'progress': {'N': str(0)},
             'location': {'S': str(location)},
+            'page_size': {'N': str(page_size)},
             # you can't have empty strings in dynamodb which is
             # laaaame
             # 'cursor': { 'S': '' },
