@@ -7,13 +7,11 @@ plugins:
   - serverless-python-requirements
   - serverless-wsgi
   - serverless-dynamodb-local
-  - serverless-plugin-simulate
 
 custom:
   scrapeTableName: 'scrape-table-${self:provider.stage}'
   requestTableName: 'request-table-${self:provider.stage}'
   instagramPostTableName: 'instagram-post-table-${self:provider.stage}'
-  instagramCursorTableName: 'instagram-cursor-table-${self:provider.stage}'
 
   wsgi:
     app: app.app
@@ -33,14 +31,11 @@ provider:
     # allow all actions on the posts table
     - Effect: Allow
       Action:
-        - "*"
+        - "dynamodb:*"
       Resource:
         - { "Fn::GetAtt": ["InstagramPostDynamoDBTable", "Arn"] }
-    - Effect: Allow
-      Action:
-        - "*"
-      Resource:
-        - { "Fn::GetAtt": ["InstagramCursorDynamoDbTable", "Arn"] }
+        - { "Fn::GetAtt": ["ScrapeDynamoDbTable", "Arn"] }
+        - { "Fn::GetAtt": ["RequestDynamoDbTable", "Arn"] }
     - Effect: Allow
       Action:
         - lambda:InvokeFunction
@@ -50,7 +45,7 @@ provider:
     SCRAPE_TABLE: ${self:custom.scrapeTableName}
     REQUEST_TABLE: ${self:custom.requestTableName}
     INSTAGRAM_POST_TABLE: ${self:custom.instagramPostTableName}
-    INSTAGRAM_CURSOR_TABLE: ${self:custom.instagramCursorTableName}
+    STAGE: ${self:provider.stage}
 
 functions:
   app:
@@ -58,37 +53,25 @@ functions:
     events:
       - http: ANY /
       - http: 'ANY {proxy+}'
-  posts:
-    handler: wsgi.handler
-    events:
-      - http: 'POST /posts'
-  # hello:
-  #   handler: functions.hello
-  derp:
-    handler: functions.derp
-  schmerp:
-    handler: app.schmerp
-  test_lisa:
-    handler: app.test_lisa
-  herp:
-    handler: functions.herp
+
+  scrapeStream:
+    handler: functions.scrape_stream_handler
     events:
       - stream:
           type: dynamodb
           batchSize: 1
           arn:
             Fn::GetAtt:
-              - InstagramCursorDynamoDbTable
+              - ScrapeDynamoDbTable
               - StreamArn
-
-  scrapeInstagram:
-    handler: wsgi.handler
-    events:
-      - http: 'GET /scrape_instagram'
-
+  trial:
+    handler: functions.trial
 
 resources:
   Resources:
+
+    # a table to store requests made to the
+    # adversarial server
     RequestDynamoDbTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -105,6 +88,8 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
 
+    # a table to persist data
+    # between lambda function executing scrapes
     ScrapeDynamoDbTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -113,15 +98,6 @@ resources:
           -
             AttributeName: id
             AttributeType: N
-          # -
-          #   AttributeName: start_page
-          #   AttributeType: N
-          # -
-          #   AttributeName: end_page
-          #   AttributeType: N
-          # -
-          #   AttributeName: location
-          #   AttributeType: N
         KeySchema:
           -
             AttributeName: id
@@ -132,31 +108,9 @@ resources:
         StreamSpecification:
           StreamViewType: NEW_AND_OLD_IMAGES
 
-    InstagramCursorDynamoDbTable:
-      Type: 'AWS::DynamoDB::Table'
-      Properties:
-        TableName: ${self:custom.instagramCursorTableName}
-        AttributeDefinitions:
-          -
-            # the string that stores the cursor
-            AttributeName: cursor
-            AttributeType: S
-        KeySchema:
-          -
-            # we want these to be unique
-            AttributeName: cursor
-            KeyType: HASH
-        ProvisionedThroughput:
-            ReadCapacityUnits: 1
-            WriteCapacityUnits: 1
 
-        # create a stream for this table
-        StreamSpecification:
-          # enable the stream
-          # make it so that the handler receives
-          # the old and new versions of each item
-          StreamViewType: NEW_AND_OLD_IMAGES
-
+    # a table to store posts
+    # scraped from instagram
     InstagramPostDynamoDBTable:
       Type: 'AWS::DynamoDB::Table'
       Properties:
@@ -174,36 +128,5 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-    # InstagramUsersDynamoDBTable:
-    #   Type: 'AWS::DynamoDB::Table'
-    #   Properties:
-    #     AttributeDefinitions:
-    #       -
-    #         AttributeName: id
-    #         AttributeType: S
-    #     KeySchema:
-    #       -
-    #         AttributeName: id
-    #         KeyType: HASH
-    #     ProvisionedThroughput:
-    #       ReadCapacityUnits: 1
-    #       WriteCapacityUnits: 1
-    #     TableName: ${self:custom.instagramUserTableName}
-
-    # UsersDynamoDBTable:
-    #   Type: 'AWS::DynamoDB::Table'
-    #   Properties:
-    #     AttributeDefinitions:
-    #       -
-    #         AttributeName: userId
-    #         AttributeType: S
-    #     KeySchema:
-    #       -
-    #         AttributeName: userId
-    #         KeyType: HASH
-    #     ProvisionedThroughput:
-    #       ReadCapacityUnits: 1
-    #       WriteCapacityUnits: 1
-    #     TableName: ${self:custom.tableName}
-
-
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES

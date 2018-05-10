@@ -1,136 +1,96 @@
-# aerocene
+# Aerocene
+A CloudFormation for distributed, fault-tolerant web scraping.
 
-At this point I've built a proof of concept that it's
-possible to scrape Instagram usign AWS Lambda.
+# Directory Structure
 
-It's pretty ugly and I'm not sure that it's faster
-than doing it with a single server.
+# Set Up
 
-I've rewritten the "instagram-scraper" library to
-use /tmp/ files and return the necessary cursor variable
-so that we don't have to reinvent the whlle of scraping it
-ourselves.
+Warning: This setup process is highly complex and has a lot of moving pieces.
 
-In particular I bet that scraping 100 records at a time
-locally is much faster and cheaper than having a lambda function
-scrape 10 at at time.
+To run Aerocene locally, you'll need DynamoDB installed: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html
 
-I thought it was just my computer being gradually throttled
-but it seems that the instagram api is just incredibly slow on
-purpose to disable scraping.
-
-# GETTING STARTED
-Clone the repository
-
-make a virtual environment
-virtualenv <name> --python=python3
-
-activate virtual environment
-source <name>/bin/activate
-
-install requiremenst
-pip install -r requirements.txt
-
-install npm dependencies
-npm install
-
-try to run the server
-sls wsgi serve
-
-Install the serverless framework
-
-Setup serverless to work with AWS -- if you
-don't have an AWS student account let me know.
-
-clone the repo
-
-cd aerocene
-
-virtualenv aerocene --python=python3
-
-source aerocene/bin/activate
-
-pip install -r requirements.txt
-
-sls swgi serve
-
-(open new terminal)
-
-python trial.py
-
-To run dynamodb locally run sls dynamodb install (once you've added the plugin)
-
-sls dynamodb start --migrate (you have to run it with this flag every time because=
-out of the box it isn't saving the data, just storing it in memory. You can change this but
-to do that you have to change some of this stuff
-https://www.npmjs.com/package/serverless-dynamodb-local)
-
-You need docker installed to deploy
+To deploy an Aerocene CloudFormation to AWS, you'll need to [install Docker](https://docs.docker.com/install/), which requires creating a free account. You'll also need to configure your AWS credentials.
 
 
-If your stuff takes forever it's likely that the database isn't runnign
-# Notes
+## Step 1: Create a Virtual Python Environment
 
-We should be good on the AWS free tier as long
-as we don't deloy too often. I used about 10% of the monthly limit on s3 PUT requests running `sls deploy`
-while developing thus far.
+- If you don't have a virtual environment wrapper installed, install `virtualenv`
+- Create a virtual environment with Python 3
 
 
-# TODO
+    `virtualenv aerocene --python=python3;`
 
-Tasks:
-1 - Find and implement a better example than Instagram
-    Linkedin? Pinterest? Something that doesn't intentionally
-    slow down their API and responds within 6 seconds.
-    Could also build our own API server.
-    https://github.com/ericfourrier/scrape-linkedin
+    `cd aerocene;`
 
-2 - Build a visualization
-    - just set up a web page which allows you to type in a location
-    and show both systems scraping stuff
+    `source bin/activate;`
 
-3 - Optimize instagram implementation
-    - Stop writing to ephemeral disk
-    - Run trials with local
+## Step 2: Clone the repo into the environment
+
+` git clone <repo_url> aerocene;`
+
+`cd aerocene;`
+
+(Current directory `/aerocene/aerocene/` )
 
 
+## Step 3: Install Depdendencies
 
-run lots of different trials in different environments
+You'll need both the python requirements and the javascript requirements for Serverless. The python requirements can be installed via pip, and the javascript via npm.
 
-build a visualization
+Install the serverless framework globally (to be able to use the CLI)
 
-reduce space usage / having to write to ephemeral disk
+`npm install -g serverless`
 
-build for other sites like linkedin or pinterest
+Log in to serverless, configure AWS credentials
 
-Honestly we could also build an adversarial REST api
-that does tricky rate limit things and then
-build our system to get around it.
+`sls login`
 
+Install python requirements
 
-Rough estimates
-AWS Lambda Free Tier
-1M free requests
-400k GB s free = 3.2M seconds
+`pip install -r requirements.txt`
 
-If you assume we use 100mb per s and each call takes 30s, that's 3 GBs
-which gives us 100k free requests
+Install javascript dependencies
 
-at 100 images per request we get 10M free images.
+`npm install`
 
-This enables us to do 1000 trials of scraping 10,000 images each.
+Install dynamodb plugin for serverless
+
+`sls dynamodb install`
 
 
-Use dynamo db locally?
+## Step 4: Run Aerocene Development Mode
 
-# TODO
-Do a test to figure out how often the ip changes. Write a lambda function that
-just sends a request to a server or localhost and then deploy it and see how often it changes
+- Open settings.py and set DEBUG = True
 
+- run `sls dynamodb start --migrate` to create a local dynamodb server
 
-Can we scrape just linkedin profile pictures?
+- open a new terminal and run `sls wsgi serve` to run the lambda server.
 
-Or senior photos on instagram somehow?
+- Open a browser to `http://localhost:5000`. You should receive a successful response.
 
+- Navigate to `http://localhost:5000/scrape_instagram`. You should receive a json response containing Instagram.
 
-To run the trial make sure you have sls dynamodb start --migrate running locally
+## Step 5: Run trials locally
+
+Trial 0 scrapes Instagram by sending requests from your machine. Start with 10 pages of size 10.
+
+`time python trial0.py <pages> <page_size>`
+
+Trial 1 (in development mode) scrapes instagram by sending requests through the locally running Aerocene.
+
+`time python trial1.py <pages> <page_size>`
+
+Trial 2 does not work in development mode.
+
+## Step 5: Deploy Production build
+
+Note -- this won't work if you don't have an AWS account and your credentials set up, or aren't logged in to serverless.
+
+Open settings.py and change `DEBUG = False`.
+
+Use serverless to deploy to AWS
+
+`sls deploy --stage production`
+
+It should take a couple of minutes
+

@@ -12,3 +12,4 @@ __pycache__/**
 
 jakeseaton0.json
 .DS_Store
+*.pyc
