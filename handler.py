@@ -68,7 +68,8 @@ import threading
 #     return response
 
 def hello(event, context):
-    ua = UserAgent(verify_ssl=False)
+    # Crates user agent.
+    ua = UserAgent()
     proxies = []
 
     # Retrieve proxies.
@@ -95,39 +96,37 @@ def hello(event, context):
     # Replace this with insta/dynamoDB scraping.
     # Tested with icanhazip.com API (returns proxied ip address).
     for n in range(0, 12):
-        print(n)
-        wait_time = random.uniform(0.25, 3.25)
-
+        # Wait random time to send request.
+        wait_time = random.uniform(0.1, 2.5)
         time.sleep(wait_time)
-        # Request to icanhazip, which returns IP address to be used.
+
+        # Request to icanhazip, which returns IP address that is used.
         req = Request('http://icanhazip.com')
         req.set_proxy(proxy['ip'] + ':' + proxy['port'], 'http')
 
+        # Creating proxy url. Instantiating client.
         spoof = 'http://' + proxy['ip'] + ':' + proxy['port']
-        print("Proxy", spoof)
-        web_api = Client(auto_patch=True, drop_incompat_keys=False, proxy=spoof, timeout=15)
+        web_api = Client(auto_patch=True, drop_incompat_keys=False, proxy=spoof, timeout=30)
 
-        # location_feed_info = web_api.location_feed(location_id, count=50, cursor=end_cursor)
-        print("Before...")
-        token = web_api.csrftoken
-        print("token", token)
+        # To test if the client works...
+        # token = web_api.csrftoken
+        # print("Token", token)
 
-        print(proxy['ip'] + ':' + proxy['port'])
+        # Change the proxy ip/port combo every 2.
         if n%2 == 0:
             proxy_index = random.randint(0, len(proxies) - 1)
             proxy = proxies[proxy_index]
 
         try:
             my_ip = urlopen(req).read().decode('utf8')
-            #print("my_ip", my_ip)
             final = final + '#' + str(n) + ':' + my_ip
         except:
             del proxies[proxy_index]
             final = final + '# ' + 'failed'
-            #print('Proxy ' + proxy['ip'] + ':' + proxy['port'] + ' deleted.')
             proxy_index = random.randint(0, len(proxies) - 1)
             proxy = proxies[proxy_index]
-    #final += event
+
+    # Test that rotation works.
     print(final)
     response = {
         "statusCode": 200,
