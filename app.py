@@ -24,71 +24,71 @@ def hello(*args, **kwargs):
 
 # functions that implement Lisa's adversarial server
 @app.route("/rate_limit")
-def rate_limit(request_count, *args, **kwargs):
-    MAX_REQUESTS = 2
-    if request_count >= MAX_REQUESTS:
-        print("429 Too Many Requests. Try again later.")
-    else:
-        print("Request accepted.")
-    return
+def rate_limit(*args, **kwargs):
+    # extract the ip address from the request
+    address = request.remote_addr
+    print("Address", address)
+
+    # get or create a record for this address
+    record = queries.get_or_create_address(address)['Item']
+
+    # determine how many requests have been sent by this
+    # address
+    request_count = record.get("request_count")["N"]
+
+    # if that's greater than the max we allow per address
+    if int(request_count) >= settings.MAX_REQUESTS_PER_ADDRESS:
+
+        # bye felicia
+        return jsonify({
+            "error": "429 Too Many Requests. Try again later."
+        })
+
+    # else increment the counter
+    queries.increment_requests_for_address(address)
+
+    # and return the updated record
+    return jsonify(queries.get_address(address).get("Item"))
 
 
 @app.route("/backoff")
-def backoff(request_count, *args, **kwargs):
-    MAX_REQUESTS = 3
-    if request_count >= MAX_REQUESTS:
-        print("429 Too Many Requests. Try again later.")
-    else:
-        # exponential backoff with randomness
-        time.sleep((2 ** request_count) + (random.randint(0, 1000) / 1000.0))
-        print("Request accepted.")
-    return
+def backoff(*args, **kwargs):
+
+    address = request.remote_addr
+    print("Address", address)
+
+    record = queries.get_or_create_address(address).get("Item")
+
+    request_count = int(record.get("request_count").get("N"))
+
+    # if they've sent more requests than we allow per address
+    if int(request_count) >= settings.MAX_REQUESTS_PER_ADDRESS:
+        extra_requests = request_count - settings.MAX_REQUESTS_PER_ADDRESS
+        # backoff exponentially
+        time.sleep(2 ** extra_requests)
+
+
+    queries.increment_requests_for_address(address)
+
+    return jsonify(queries.get_address(address).get("Item"))
 
 
 @app.route("/blacklist")
-def blacklist(address, request_count, *args, **kwargs):
-    MAX_REQUESTS = 3
-    if request_count >= MAX_REQUESTS:
-        print("429 Too Many Requests. You have been blacklisted 4ever.")
-        blacklist_address(address)
-    else:
-        print("Request accepted.")
-    return
+def blacklist(*args, **kwargs):
+    address = request.remote_addr
+    print("Address", address)
 
+    record = queries.get_or_create_address(address).get("Item")
 
-def test_lisa(*args, **kwargs):
-    address = "1746"
-    test = 1 # 1 for rate-limiting, 2 for exponential backoff, 3 for blacklisting
-    record = queries.get_or_create_address(address)["Item"]
-    request_count = int(record["request_count"]["N"])
-    increment_requests_for_address(address)
+    request_count = int(record.get("request_count").get("N"))
 
-    # if already blacklisted
-    if record["blacklisted"]["BOOL"] == True:
-        print("Access Denied. You are a blacklisted agent.")
-        return get_address(address)
+    # if they've sent more requests than we allow per address
+    if int(request_count) >= settings.MAX_REQUESTS_PER_ADDRESS:
+        queries.blacklist_address(address)
+        return jsonify({ "error": "403 Forbidden", "blacklisted": True })
 
-    if test == 1: # rate-limiting
-        rate_limit(request_count)
-
-    if test == 2: # exponential backoff
-        backoff(request_count)
-
-    if test == 3: # blacklisting
-        blacklist(address, request_count)
-
-    return get_address(address)
-
-
-def get_address(address):
-    return client.get_item(
-        TableName=REQUEST_TABLE,
-        Key={
-            'address': { 'S': address }
-        }
-    )
-
-    # could alternatively use the instagram implementation
+    queries.increment_requests_for_address(address)
+    return jsonify(queries.get_address(address).get("Item"))
 
 
 def scrape_is_done(scrape_id):

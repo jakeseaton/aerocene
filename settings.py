@@ -12,7 +12,5 @@ DEFAULT_CURSOR = ""
 
 PAGE_SIZE = 50
 
-
 # adversarial server settings
-
 MAX_REQUESTS_PER_ADDRESS = 10
