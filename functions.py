@@ -3,6 +3,23 @@ import requests
 import os
 from instagram_web_api import Client, ClientCompatPatch
 
+def cursor_stream_handler(event, context):
+    records = event.get("Records", [])
+    for record in records:
+        if record['eventName'] == "INSERT":
+            # extract the new cursor from the event
+            new_cursor = record['dynamodb']['NewImage']['cursor']['S']
+    return event
+            # invoke a different lambda function
+            # lambda_invoke(scrape_cursor(...))
+
+def scrape_stream_handler(event, context):
+    for e in event.get("Records", []):
+        if record['eventName'] == "INSERT":
+            new_scrape = record['dynamodb']['NewImage']['id']['N']
+            print(new_scrape)
+    return new_scrape
+
 
 def herp(event, context):
     records = event.get("Records", [])
