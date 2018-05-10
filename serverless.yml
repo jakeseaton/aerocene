@@ -51,6 +51,7 @@ provider:
     REQUEST_TABLE: ${self:custom.requestTableName}
     INSTAGRAM_POST_TABLE: ${self:custom.instagramPostTableName}
     INSTAGRAM_CURSOR_TABLE: ${self:custom.instagramCursorTableName}
+    STAGE: ${self:provider.stage}
 
 functions:
   app:

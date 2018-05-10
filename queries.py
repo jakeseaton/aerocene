@@ -2,6 +2,7 @@
 import boto3
 import settings
 import os
+import datetime
 DEBUG = settings.DEBUG
 
 # if we're running locally
@@ -18,7 +19,6 @@ INSTAGRAM_POST_TABLE = os.environ['INSTAGRAM_POST_TABLE']
 INSTAGRAM_CURSOR_TABLE = os.environ['INSTAGRAM_CURSOR_TABLE']
 SCRAPE_TABLE = os.environ['SCRAPE_TABLE']
 REQUEST_TABLE = os.environ['REQUEST_TABLE']
-
 
 
 def get_address(address):
@@ -116,7 +116,7 @@ def insert_cursor(cursor):
         TableName=INSTAGRAM_CURSOR_TABLE,
         Item={
             'cursor': { 'S': cursor },
-            'created': { 'S': str(datetime.now()) },
+            'created': { 'S': str(datetime.datetime.now()) },
             'scraped': { 'BOOL': False }
         }
     )
