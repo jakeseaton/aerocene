@@ -10,6 +10,7 @@ import json
 import boto3
 import threading
 
+
 def hello(event, context):
     # Crates user agent.
     ua = UserAgent()
