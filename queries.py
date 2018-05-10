@@ -85,6 +85,15 @@ def increment_requests_for_address(address):
     )
 
 
+def reset_requests_for_address(address):
+    return client.update_item(
+        Key={'address': {'S': address}},
+        UpdateExpression='SET request_count = :num',
+        ExpressionAttributeValues={":num": {"N": "0"}},
+        ReturnValues="UPDATED_NEW"
+    )
+
+
 def generate_unique_scrape_id():
     # this is the worst possible way to do this
     return client.describe_table(TableName=SCRAPE_TABLE)["Table"]["ItemCount"] + 1

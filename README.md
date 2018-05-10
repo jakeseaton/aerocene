@@ -1,41 +1,49 @@
-# aerocene
-
-At this point I've built a proof of concept that it's
-possible to scrape Instagram usign AWS Lambda.
-
-It's pretty ugly and I'm not sure that it's faster
-than doing it with a single server.
-
-I've rewritten the "instagram-scraper" library to
-use /tmp/ files and return the necessary cursor variable
-so that we don't have to reinvent the whlle of scraping it
-ourselves.
-
-In particular I bet that scraping 100 records at a time
-locally is much faster and cheaper than having a lambda function
-scrape 10 at at time.
-
-I thought it was just my computer being gradually throttled
-but it seems that the instagram api is just incredibly slow on
-purpose to disable scraping.
+# Aerocene
+A distributed system for fault-tolerant web scraping
 
 # GETTING STARTED
-Clone the repository
 
-make a virtual environment
-virtualenv <name> --python=python3
+This is a fairly complext setup. It was developed using
+OSX El-Capitan and python 3.
 
-activate virtual environment
-source <name>/bin/activate
+To run locally, you'll need DynamoDB installed on your machine: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html
 
-install requiremenst
-pip install -r requirements.txt
+To deploy it yourself, you'll need to install Docker, which requires creating a free account: https://docs.docker.com/install/
 
-install npm dependencies
-npm install
+You'll also need to configure your AWS credentials.
 
-try to run the server
-sls wsgi serve
+
+Step 1: Create a Virtual Python Environment
+
+- If you don't have a virtual environment wrapper installed, install `virtualenv`
+- Create a virtual environment with Python 3
+    virtualenv aerocene --python=python3;
+    cd aerocene;
+    source bin/activate;
+
+Step 2: Clone the repo into the environment
+
+git clone <repo_url> aerocene;
+cd aerocene;
+
+(Current directory /aerocene/aerocene/ )
+
+Step 3: Install Depdendencies
+- npm install -g serverless
+- pip install -r requirements.txt
+- npm install
+- sls dynamodb install
+
+
+Step 4: Run Development Mode
+- Open settings.py and set DEBUG = True
+- run `sls dynamodb start --migrate` to create a local dynamodb server
+- open a new terminal and run `sls wsgi serve` to run the lambda server.
+- Visit localhost:5000
+
+Step 5: Run Trial 0 and Trial 1
+- time python trial0.py <pages> <page_size>
+- time python trial1.py <pages> <page_size>
 
 Install the serverless framework
 

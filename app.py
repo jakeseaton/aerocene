@@ -23,8 +23,6 @@ def hello(*args, **kwargs):
     return jsonify({ "status": "live", "message": "Welcome to Aerocene!" })
 
 # functions that implement Lisa's adversarial server
-
-
 @app.route("/rate_limit")
 def rate_limit(*args, **kwargs):
     # TODO LISA
