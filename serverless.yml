@@ -1,178 +1,175 @@
 service: aerocene
 
+plugins:
+  - serverless-python-requirements
+  - serverless-wsgi
+  - serverless-dynamodb-local
+
+custom:
+  scrapeTableName: 'scrape-table-${self:provider.stage}'
+  requestTableName: 'request-table-${self:provider.stage}'
+  instagramPostTableName: 'instagram-post-table-${self:provider.stage}'
+  instagramCursorTableName: 'instagram-cursor-table-${self:provider.stage}'
+
+  wsgi:
+    app: app.app
+    packRequirements: false
+
+  pythonRequirements:
+    dockerizePip: non-linux
+    zipImport: true
+
 provider:
   name: aws
   runtime: python3.6
   timeout: 150
   region: us-east-2
   iamRoleStatements:
+    # allow all actions on the posts table
+    - Effect: Allow
+      Action:
+        - "dynamodb:*"
+      Resource:
+        - { "Fn::GetAtt": ["InstagramPostDynamoDBTable", "Arn"] }
+    - Effect: Allow
+      Action:
+        - "dynamodb:*"
+      Resource:
+        - { "Fn::GetAtt": ["InstagramCursorDynamoDbTable", "Arn"] }
+    - Effect: Allow
+      Action:
+        - "dynamodb:*"
+      Resource:
+        - { "Fn::GetAtt": ["ScrapeDynamoDbTable", "Arn"] }
+    - Effect: Allow
+      Action:
+        - "dynamodb:*"
+      Resource:
+        - { "Fn::GetAtt": ["RequestDynamoDbTable", "Arn"] }
+
     - Effect: Allow
       Action:
         - lambda:InvokeFunction
+        - lambda:InvokeAsync
       Resource: "*"
-
+  environment:
+    SCRAPE_TABLE: ${self:custom.scrapeTableName}
+    REQUEST_TABLE: ${self:custom.requestTableName}
+    INSTAGRAM_POST_TABLE: ${self:custom.instagramPostTableName}
+    INSTAGRAM_CURSOR_TABLE: ${self:custom.instagramCursorTableName}
+    STAGE: ${self:provider.stage}
 
 functions:
-  hello:
-    handler: handler.hello
+  app:
+    handler: wsgi.handler
+    events:
+      - http: ANY /
+      - http: 'ANY {proxy+}'
+  # derp:
+  #   handler: functions.derp
+  scrapeStream:
+    handler: functions.scrape_stream_handler
+    events:
+      - stream:
+          type: dynamodb
+          batchSize: 1
+          arn:
+            Fn::GetAtt:
+              - ScrapeDynamoDbTable
+              - StreamArn
+  trial:
+    handler: functions.trial
   cron_launcher:
     handler: handler.cron_launcher
     events:
       - schedule: rate(1 minute)
 
+resources:
+  Resources:
 
-plugins:
-  - serverless-python-requirements
+    # a table to store requests made to the
+    # adversarial server
+    RequestDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.requestTableName}
+        AttributeDefinitions:
+          -
+            AttributeName: address
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: address
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
 
-custom:
-  pythonRequirements:
-    dockerizePip: non-linux
+    # a table to persist data
+    # between lambda function executing scrapes
+    ScrapeDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.scrapeTableName}
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: N
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
 
-# # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/quickref-dynamodb.html
-# # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/quickref-rds.html
-#
-# service: aerocene
-#
-# plugins:
-#   - serverless-python-requirements
-#   - serverless-wsgi
-#   - serverless-dynamodb-local
-#
-# custom:
-#   tableName: 'users-table-${self:provider.stage}'
-#   instagramUserTableName: 'instagram-users-table-${self:provider.stage}'
-#   instagramPostTableName: 'instagram-post-table-${self:provider.stage}'
-#   instagramCursorTableName: 'instagram-cursor-table-${self:provider.stage}'
-#   wsgi:
-#     app: app.app
-#     packRequirements: false
-#   pythonRequirements:
-#     dockerizePip: non-linux
-#     zipImport: true
-#
-# provider:
-#   name: aws
-#   runtime: python3.6
-#   stage: dev
-#   region: us-east-1
-#   iamRoleStatements:
-#     # Can you collapse these into one? Declaring this effect for
-#     # all resources?
-#     - Effect: Allow
-#       Action:
-#         - dynamodb:Query
-#         - dynamodb:Scan
-#         - dynamodb:GetItem
-#         - dynamodb:PutItem
-#         - dynamodb:UpdateItem
-#         - dynamodb:DeleteItem
-#       Resource:
-#         - { "Fn::GetAtt": ["UsersDynamoDBTable", "Arn" ] }
-#     - Effect: Allow
-#       Action:
-#         - dynamodb:Query
-#         - dynamodb:Scan
-#         - dynamodb:GetItem
-#         - dynamodb:PutItem
-#         - dynamodb:UpdateItem
-#         - dynamodb:DeleteItem
-#       Resource:
-#         - { "Fn::GetAtt": ["InstagramUsersDynamoDBTable", "Arn" ] }
-#       # NEED TO SPECIFY THESE FOR NEW TABLES IF STUFF ISNT WORKING
-#   environment:
-#     USERS_TABLE: ${self:custom.tableName}
-#     INSTAGRAM_USERS_TABLE: ${self:custom.instagramUserTableName}
-#     INSTAGRAM_POST_TABLE: ${self:custom.instagramPostTableName}
-#     INSTAGRAM_CURSOR_TABLE: ${self:custom.instagramCursorTableName}
-#
-# functions:
-#   app:
-#     handler: wsgi.handler
-#     events:
-#       - http: ANY /
-#       - http: 'ANY {proxy+}'
-#   posts:
-#     handler: wsgi.handler
-#     events:
-#       - http: 'POST /posts'
-#   hello:
-#     handler: functions.hello
-#
-#   scrapeInstagram:
-#     handler: wsgi.handler
-#     events:
-#       - http: 'GET /scrape_instagram'
-#
-#
-# resources:
-#   Resources:
-#     InstagramUsersDynamoDBTable:
-#       Type: 'AWS::DynamoDB::Table'
-#       Properties:
-#         AttributeDefinitions:
-#           -
-#             AttributeName: id
-#             AttributeType: S
-#         KeySchema:
-#           -
-#             AttributeName: id
-#             KeyType: HASH
-#         ProvisionedThroughput:
-#           ReadCapacityUnits: 1
-#           WriteCapacityUnits: 1
-#         TableName: ${self:custom.instagramUserTableName}
-#
-#     UsersDynamoDBTable:
-#       Type: 'AWS::DynamoDB::Table'
-#       Properties:
-#         AttributeDefinitions:
-#           -
-#             AttributeName: userId
-#             AttributeType: S
-#         KeySchema:
-#           -
-#             AttributeName: userId
-#             KeyType: HASH
-#         ProvisionedThroughput:
-#           ReadCapacityUnits: 1
-#           WriteCapacityUnits: 1
-#         TableName: ${self:custom.tableName}
-#
-#     InstagramCursorDynamoDbTable:
-#       Type: 'AWS::DynamoDB::Table'
-#       Properties:
-#         TableName: ${self:custom.instagramCursorTableName}
-#         AttributeDefinitions:
-#           -
-#             # the string that stores the cursor
-#             AttributeName: cursor
-#             AttributeType: S
-#         KeySchema:
-#           -
-#             # we want these to be unique
-#             AttributeName: cursor
-#             KeyType: HASH
-#         ProvisionedThroughput:
-#             ReadCapacityUnits: 1
-#             WriteCapacityUnits: 1
-#
-#
-#     InstagramPostDynamoDBTable:
-#       Type: 'AWS::DynamoDB::Table'
-#       Properties:
-#         TableName: ${self:custom.instagramPostTableName}
-#         AttributeDefinitions:
-#           -
-#             # the id of the post
-#             AttributeName: id
-#             AttributeType: S
-#         KeySchema:
-#           -
-#             # these should be unique
-#             AttributeName: id
-#             KeyType: HASH
-#         ProvisionedThroughput:
-#           ReadCapacityUnits: 1
-#           WriteCapacityUnits: 1
-#
-#
+    # a table to store cursors
+    # scraped from instagram
+    InstagramCursorDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: ${self:custom.instagramCursorTableName}
+        AttributeDefinitions:
+          -
+            # the string that stores the cursor
+            AttributeName: cursor
+            AttributeType: S
+        KeySchema:
+          -
+            # we want these to be unique
+            AttributeName: cursor
+            KeyType: HASH
+        ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+
+        # create a stream for this table
+        StreamSpecification:
+          # enable the stream
+          # make it so that the handler receives
+          # the old and new versions of each item
+          StreamViewType: NEW_AND_OLD_IMAGES
+
+    # a table to store posts
+    # scraped from instagram
+    InstagramPostDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: ${self:custom.instagramPostTableName}
+        AttributeDefinitions:
+          -
+            # the id of the post
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            # these should be unique
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
