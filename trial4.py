@@ -5,7 +5,7 @@ import json
 
 
 def scrape_endpoint(endpoint):
-    print("Scraping the %s endpoint without ip rotation" % endpoint)
+    print("Scraping the %s endpoint with ip rotation" % endpoint)
     timeout = 5
     counter = 0
 
