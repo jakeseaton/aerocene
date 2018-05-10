@@ -11,7 +11,7 @@ import boto3
 import threading
 
 
-def hello(event, context):
+def get_proxies():
     # Crates user agent.
     ua = UserAgent()
     proxies = []
@@ -30,10 +30,19 @@ def hello(event, context):
             'ip': row.find_all('td')[0].string,
             'port': row.find_all('td')[1].string
         })
+    return proxies
+
+def create_proxy_dict(proxy):
+    return {
+        'http': 'http://%s:%s' % (proxy['ip'], proxy['port']),
+        # 'https:': 'http://%s:%s' % (proxy['ip'], proxy['port'])
+    }
+
+def hello(event, context):
+    proxies = get_proxies()
 
     # Picking random proxy to use.
-    proxy_index = random.randint(0, len(proxies) - 1)
-    proxy = proxies[proxy_index]
+    proxy = random.choice(proxies)
 
     final = ''
 
@@ -122,4 +131,4 @@ def cron_launcher(event, context):
     return response
 
 
-print(cron_launcher(None, None))
+# print(cron_launcher(None, None))

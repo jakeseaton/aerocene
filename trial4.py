@@ -2,18 +2,27 @@ import sys
 import settings
 import requests
 import json
-
+import proxy
+import random
+from urllib.request import Request, urlopen
 
 def scrape_endpoint(endpoint):
     print("Scraping the %s endpoint with ip rotation" % endpoint)
     timeout = 5
     counter = 0
+    proxies = proxy.get_proxies()
 
     URL = settings.PRODUCTION_URL + "/" + endpoint
+
     try:
         while True:
             print("Request", counter)
-            response = requests.get(URL, timeout=timeout)
+
+            curr_proxy = proxy.create_proxy_dict(random.choice(proxies))
+            print("Proxy", curr_proxy)
+
+            response = requests.get(URL, proxies=curr_proxy)
+
             status = json.loads(response.content).get("status", 200)
 
             if status == 429:
@@ -25,6 +34,7 @@ def scrape_endpoint(endpoint):
     except requests.Timeout:
         print("Timed out after", counter, "requests")
     except Exception as e:
+        import traceback; traceback.print_exc();
         print(e)
 
 
@@ -37,5 +47,7 @@ if __name__ == "__main__":
         print("Usage: python trial3.py <endpoint:backoff | blacklist | rate_limit>")
         raise SystemExit
 
+    if settings.DEBUG:
+        print("Trial4 must be run on production instance for proxies to work")
 
     scrape_endpoint(endpoint)

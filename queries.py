@@ -170,8 +170,7 @@ def insert_posts(posts):
     # perform a batch insert into
     # the instagram post table
     for post in posts:
-        # print("This is a post")
-        pass
+        insert_post(post)
 
 
 def insert_post(post):

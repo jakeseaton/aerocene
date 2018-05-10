@@ -62,10 +62,10 @@ functions:
               - StreamArn
   trial:
     handler: functions.trial
-  cron_launcher:
-    handler: handler.cron_launcher
-    events:
-      - schedule: rate(1 minute)
+  # cron_launcher:
+  #   handler: handler.cron_launcher
+  #   events:
+  #     - schedule: rate(1 minute)
 
 resources:
   Resources:

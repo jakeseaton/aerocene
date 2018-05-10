@@ -10,6 +10,7 @@ def scrape_endpoint(endpoint):
     counter = 0
 
     URL = settings.PRODUCTION_URL + "/" + endpoint
+    print(URL)
     try:
         while True:
             print("Request", counter)
