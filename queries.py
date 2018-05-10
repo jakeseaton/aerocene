@@ -6,13 +6,20 @@ import datetime
 
 # if we're running locally
 if settings.DEBUG:
+    print("Connecting to local dynamodb...")
     # connect to the local instance of dynamo
     client = boto3.client('dynamodb', endpoint_url='http://localhost:8000', region_name='us-west-2')
     lambda_client = boto3.client("lambda", endpoint_url="http://localhost:4000", region_name='us-west-2')
 else:
+    print("Connecting to production dynamodb...")
+
     # otherwise connect to the one in this cloud formation
     # TODO: figure out how this works and figures out where the db is
-    client = boto3.client('dynamodb')
+    try:
+        client = boto3.client('dynamodb')
+    except Exception as e:
+        print("Failed to connect to dynamodb. If you're running locally set DEBUG = False in settings.py")
+        raise SystemExit
 
 INSTAGRAM_POST_TABLE = os.environ['INSTAGRAM_POST_TABLE']
 INSTAGRAM_CURSOR_TABLE = os.environ['INSTAGRAM_CURSOR_TABLE']

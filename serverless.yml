@@ -35,22 +35,9 @@ provider:
         - "dynamodb:*"
       Resource:
         - { "Fn::GetAtt": ["InstagramPostDynamoDBTable", "Arn"] }
-    - Effect: Allow
-      Action:
-        - "dynamodb:*"
-      Resource:
-        - { "Fn::GetAtt": ["InstagramCursorDynamoDbTable", "Arn"] }
-    - Effect: Allow
-      Action:
-        - "dynamodb:*"
-      Resource:
         - { "Fn::GetAtt": ["ScrapeDynamoDbTable", "Arn"] }
-    - Effect: Allow
-      Action:
-        - "dynamodb:*"
-      Resource:
+        - { "Fn::GetAtt": ["InstagramCursorDynamoDbTable", "Arn"] }
         - { "Fn::GetAtt": ["RequestDynamoDbTable", "Arn"] }
-
     - Effect: Allow
       Action:
         - lambda:InvokeFunction

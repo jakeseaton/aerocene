@@ -10,6 +10,7 @@ from datetime import datetime
 import json
 import queries
 import functions
+import instagram
 
 app = Flask(__name__)
 
@@ -136,7 +137,7 @@ def scrape_instagram(*args, **kwargs):
         # return an error
         return jsonify({'error': 'You must specify a location or an end cursor to scrape.'})
 
-    result = functions.scrape_instagram_web({ 'location': location, 'cursor': cursor}, {})
+    result = instagram.scrape({ 'location': location, 'cursor': cursor}, {})
 
     # print("The returned cursor was", result['cursor'])
 
