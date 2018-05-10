@@ -63,7 +63,8 @@ def batch_scrape(*args, **kwargs):
     location = request.args.get("location", 44961364)
     start_page = request.args.get("start_page", 0)
     end_page = request.args.get("end_page", 1)
-    scrape_id = queries.create_scrape(start_page, end_page, location)
+    page_size = int(request.args.get("page_size", settings.PAGE_SIZE))
+    scrape_id = queries.create_scrape(start_page, end_page, location, page_size)
 
     return jsonify({
         "status": "success",
@@ -72,6 +73,7 @@ def batch_scrape(*args, **kwargs):
         "location": location,
         "start_page": start_page,
         "end_page": end_page,
+        "page_size": page_size,
     })
 
 
@@ -93,6 +95,7 @@ def batch_scrape_post(*args, **kwargs):
     location = request.form.get("location", 44961364)
     start_page = request.form.get("start_page", 0)
     end_page = request.form.get("end_page", 2)
+    page_size = int(equest.form.get("page_size", settings.PAGE_SIZE))
     scrape_id = queries.create_scrape(start_page, end_page, location)
     return jsonify({"scrape_id": scrape_id})
 
@@ -105,12 +108,13 @@ def scrape_instagram(*args, **kwargs):
     # of the request
     location = request.args.get('location', 44961364)
     cursor = request.args.get('cursor', '')
+    page_size = int(request.args.get("page_size", settings.PAGE_SIZE))
 
     # if we didn't receive either one
     if not location and not cursor:
         # return an error
         return jsonify({'error': 'You must specify a location or an end cursor to scrape.'})
 
-    result = instagram.scrape({'location': location, 'cursor': cursor}, {})
+    result = instagram.scrape({'location': location, 'cursor': cursor}, {}, page_size)
 
     return jsonify(result)

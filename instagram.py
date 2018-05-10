@@ -1,6 +1,10 @@
 from instagram_web_api import Client, ClientCompatPatch
+import settings
 
-def scrape(event, context):
+def scrape(event, context, page_size=settings.PAGE_SIZE):
+
+    assert page_size <= 50, "Page size must be <= 50"
+
     location_id = event.get('location', "212988663")
     end_cursor = event.get('cursor', None)
 
@@ -12,7 +16,7 @@ def scrape(event, context):
 
     web_api = Client(auto_patch=True, drop_incompat_keys=False)
 
-    location_feed_info = web_api.location_feed(location_id, count=10, end_cursor=end_cursor)
+    location_feed_info = web_api.location_feed(location_id, count=page_size, end_cursor=end_cursor)
 
     if location_feed_info['status'] == "ok":
         pass

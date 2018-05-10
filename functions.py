@@ -41,6 +41,7 @@ def scrape_next_page(scrape):
     import queries
     scrape_id = scrape['id']['N']
     location = scrape['location']['S']
+    page_size = scrape['page_size']['N']
 
     # this has to be nasty because
     # the attribute might not exist
@@ -53,7 +54,7 @@ def scrape_next_page(scrape):
         # do nothing
         return
 
-    response = instagram.scrape({'location': location, 'cursor': cursor}, {})
+    response = instagram.scrape({'location': location, 'cursor': cursor}, {}, int(page_size))
 
     new_cursor = response['cursor']
 
