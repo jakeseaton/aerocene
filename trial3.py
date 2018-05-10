@@ -3,50 +3,38 @@ import settings
 import requests
 import json
 
-RATE_LIMIT_URL = settings.PRODUCTION_URL + "/rate_limit"
-BLACKLIST_URL = settings.PRODUCTION_URL + "/blacklist"
-BACKOFF_URL = settings.PRODUCTION_URL + "/backoff"
 
-def scrape_blacklist():
-    response = requests.get(BLACKLIST_URL)
-    counter = 1
-    while json.loads(response.content).get("status", 200) != 403:
-        print("Request", counter)
-        response = requests.get(BLACKLIST_URL)
-        counter += 1
-        print(json.loads(response.content))
-
-    print("Blacklisted after", counter, "requests")
-
-
-def scrape_rate_limit():
-    response = requests.get(RATE_LIMIT_URL)
-    counter = 1
-    while json.loads(response.content).get("status", 200) != 429:
-        print("Request", counter)
-        response = requests.get(RATE_LIMIT_URL)
-        counter += 1
-    print("Rate limited after", counter, "requests")
-
-
-def scrape_backoff():
+def scrape_endpoint(endpoint):
     timeout = 5
     counter = 0
+
+    URL = settings.PRODUCTION_URL + "/" + endpoint
     try:
         while True:
             print("Request", counter)
-            response = requests.get(BACKOFF_URL, timeout=timeout)
+            response = requests.get(URL, timeout=timeout)
+            status = json.loads(response.content).get("status", 200)
+
+            if status == 429:
+                raise ValueError("Rate Limited after %s requests" % counter)
+            if status == 403:
+                raise ValueError("Blacklisted after %s requests" % counter)
             counter += 1
+
     except requests.Timeout:
         print("Timed out after", counter, "requests")
+    except Exception as e:
+        print(e)
+
 
 if __name__ == "__main__":
-    # try:
-    #     pages = int(sys.argv[1])
-    #     page_size = int(sys.argv[2])
-    # except:
-    #     import traceback; traceback.print_exc();
-    #     print("Usage: python trial0.py <pages:int> <page_size:int>")
-    #     raise SystemExit
+    try:
+        endpoint = sys.argv[1]
+        assert endpoint in ["backoff", "blacklist", "rate_limit"]
+    except:
+        import traceback; traceback.print_exc();
+        print("Usage: python trial3.py <endpoint:backoff | blacklist | rate_limit>")
+        raise SystemExit
 
-    scrape_backoff()
+
+    scrape_endpoint(endpoint)
