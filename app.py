@@ -41,7 +41,8 @@ def rate_limit(*args, **kwargs):
 
         # bye felicia
         return jsonify({
-            "error": "429 Too Many Requests. Try again later."
+            "status": 429,
+            "error": "Too Many Requests. Try again later."
         })
 
     # else increment the counter
@@ -53,9 +54,8 @@ def rate_limit(*args, **kwargs):
 
 @app.route("/backoff")
 def backoff(*args, **kwargs):
-
     address = request.remote_addr
-    print("Address", address)
+    print("BACKOFF Address", address)
 
     record = queries.get_or_create_address(address).get("Item")
 
@@ -66,7 +66,6 @@ def backoff(*args, **kwargs):
         extra_requests = request_count - settings.MAX_REQUESTS_PER_ADDRESS
         # backoff exponentially
         time.sleep(2 ** extra_requests)
-
 
     queries.increment_requests_for_address(address)
 
@@ -85,7 +84,7 @@ def blacklist(*args, **kwargs):
     # if they've sent more requests than we allow per address
     if int(request_count) >= settings.MAX_REQUESTS_PER_ADDRESS:
         queries.blacklist_address(address)
-        return jsonify({ "error": "403 Forbidden", "blacklisted": True })
+        return jsonify({ "status": 403, "error": "Forbidden", "blacklisted": True })
 
     queries.increment_requests_for_address(address)
     return jsonify(queries.get_address(address).get("Item"))
