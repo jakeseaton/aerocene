@@ -48,7 +48,7 @@ def test_lisa(*args, **kwargs):
     queries.get_or_create_address(address)
     queries.increment_requests_for_address(address)
     queries.blacklist_address(address)
-    return get_address(address)
+    return queries.get_address(address)
     # could alternatively use the instagram implementation
 
 
