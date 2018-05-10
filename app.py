@@ -9,6 +9,7 @@ import settings
 from datetime import datetime
 import time 
 import json
+import random 
 app = Flask(__name__)
 
 INSTAGRAM_POST_TABLE = os.environ['INSTAGRAM_POST_TABLE']
@@ -36,27 +37,27 @@ def hello(*args, **kwargs):
 # functions that implement Lisa's adversarial server
 @app.route("/rate_limit")
 def rate_limit(request_count, *args, **kwargs):
-    MAX_REQUESTS = 10
+    MAX_REQUESTS = 2
     if request_count >= MAX_REQUESTS:
         print("429 Too Many Requests. Try again later.")
     else: 
         print("Request accepted.")
-    return jsonify({'success': True})
+    return
 
 @app.route("/backoff")
 def backoff(request_count, *args, **kwargs):
-    MAX_REQUESTS = 10 
+    MAX_REQUESTS = 3
     if request_count >= MAX_REQUESTS:
         print("429 Too Many Requests. Try again later.")
     else: 
         # exponential backoff with randomness 
         time.sleep((2 ** request_count) + (random.randint(0, 1000) / 1000.0)) 
         print("Request accepted.")
-    return jsonify({'success': True})
+    return 
 
 @app.route("/blacklist")
 def blacklist(address, request_count, *args, **kwargs):
-    MAX_REQUESTS = 10 
+    MAX_REQUESTS = 3
     if request_count >= MAX_REQUESTS:
         print("429 Too Many Requests. You have been blacklisted 4ever.")
         blacklist_address(address)
@@ -65,11 +66,16 @@ def blacklist(address, request_count, *args, **kwargs):
     return
 
 def test_lisa(*args, **kwargs):
-    address = "12346"
+    address = "1746"
     test = 1 # 1 for rate-limiting, 2 for exponential backoff, 3 for blacklisting 
-    record = get_or_create_address(address)
-    request_count = int(record.request_count)
+    record = get_or_create_address(address)["Item"]
+    request_count = int(record["request_count"]["N"])
     increment_requests_for_address(address)
+
+    # if already blacklisted
+    if record["blacklisted"]["BOOL"] == True:
+        print("Access Denied. You are a blacklisted agent.")
+        return get_address(address)
 
     if test == 1: # rate-limiting 
         rate_limit(request_count)
