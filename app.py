@@ -13,6 +13,7 @@ app = Flask(__name__)
 INSTAGRAM_POST_TABLE = os.environ['INSTAGRAM_POST_TABLE']
 INSTAGRAM_CURSOR_TABLE = os.environ['INSTAGRAM_CURSOR_TABLE']
 SCRAPE_TABLE = os.environ['SCRAPE_TABLE']
+REQUEST_TABLE = os.environ['REQUEST_TABLE']
 
 DEBUG = settings.DEBUG
 
@@ -30,6 +31,47 @@ else:
 @app.route("/")
 def hello(*args, **kwargs):
     return "Welcome to Aerocene!"
+
+# functions that implement Lisa's adversarial server
+@app.route("/rate_limit")
+def rate_limit(*args, **kwargs):
+    # TODO LISA
+    return jsonify({'success': True})
+
+@app.route("/backoff")
+def backoff(*args, **kwargs):
+    # TODO LISA
+    return jsonify({'success': True})
+
+@app.route("/blacklist")
+def blacklist(*args, **kwargs):
+    # TODO LISA
+    return
+
+def test_lisa(*args, **kwargs):
+    address = "1234"
+    return get_or_create_address(address)
+
+def get_or_create_address(address):
+    response = client.get_item(
+        TableName=REQUEST_TABLE,
+        Key={
+            'address': { 'S': address }
+        }
+    )
+    if response.get("Item", {}):
+        return response.get("Item")
+
+    response = client.put_item(
+        TableName=REQUEST_TABLE,
+        Item={
+            'address': { 'S': address },
+            'count': {'N': str(0)}
+        },
+        ReturnValues="ALL_OLD"
+    )
+
+    return response
 
 
 

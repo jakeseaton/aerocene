@@ -11,9 +11,9 @@ plugins:
 
 custom:
   scrapeTableName: 'scrape-table-${self:provider.stage}'
+  requestTableName: 'request-table-${self:provider.stage}'
   instagramPostTableName: 'instagram-post-table-${self:provider.stage}'
   instagramCursorTableName: 'instagram-cursor-table-${self:provider.stage}'
-
 
   wsgi:
     app: app.app
@@ -48,6 +48,7 @@ provider:
       Resource: "*"
   environment:
     SCRAPE_TABLE: ${self:custom.scrapeTableName}
+    REQUEST_TABLE: ${self:custom.requestTableName}
     INSTAGRAM_POST_TABLE: ${self:custom.instagramPostTableName}
     INSTAGRAM_CURSOR_TABLE: ${self:custom.instagramCursorTableName}
 
@@ -67,6 +68,8 @@ functions:
     handler: functions.derp
   schmerp:
     handler: app.schmerp
+  test_lisa:
+    handler: app.test_lisa
   herp:
     handler: functions.herp
     events:
@@ -86,6 +89,22 @@ functions:
 
 resources:
   Resources:
+    RequestDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.requestTableName}
+        AttributeDefinitions:
+          -
+            AttributeName: address
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: address
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
     ScrapeDynamoDbTable:
       Type: AWS::DynamoDB::Table
       Properties:
