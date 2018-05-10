@@ -20,7 +20,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def hello(*args, **kwargs):
-    return "Welcome to Aerocene!"
+    return jsonify({ "status": "live", "message": "Welcome to Aerocene!" })
 
 # functions that implement Lisa's adversarial server
 
