@@ -80,7 +80,19 @@ Trial 1 (in development mode) scrapes instagram by sending requests through the 
 
 `time python trial1.py <pages> <page_size>`
 
-Trial 2 does not work in development mode.
+Trial 2 does not work in development mode, it requires a production deployment
+
+Trial 3 tests the adversarial server. You need to have the server and dynamodb running locally for it to work
+
+`sls dynamodb start --migrate`
+
+Separate terminal:
+
+`sls wsgi serve`
+
+Separate terminal:
+
+`time python trial3.py <endpoint>`
 
 ## Step 5: Deploy Production build
 
@@ -92,5 +104,24 @@ Use serverless to deploy to AWS
 
 `sls deploy --stage production`
 
-It should take a couple of minutes
+It should take a couple of minutes.
+
+It will give you a url where your application is hosted. Copy and paste that url into
+`PRODUCTION_URL` in settings.
+
+## Step 6: View on AWS
+
+If you visit the AWS console you should be able to see your lambda functions created as well as DynamoDB tables, and all of the necessary connections between them established. If you visit the url returned by the `deploy` command you should see that your Aerocene deployment is live.
+
+## Step 7: Run Production Trials
+
+Trials 2 and 4 test the production deployment.
+
+Trial 2 scrapes a number of pages using the Aerocene Cloudformation, creating a scrape record and then periodically querying to see if it is finished.
+
+`python trial2.py <pages> <page_size>`
+
+Trial 4 simulates an ip-rotation strategy against the adversarial server.
+
+`python trial4.py <endpoint>`
 
