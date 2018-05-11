@@ -88,7 +88,8 @@ Trial 3 tests the adversarial server. You need to have the server and dynamodb r
 
 Separate terminal:
 
-`sls wsgi serve`
+`sls wsgi serve` (if you get a 'SSL: CERTIFICATE_VERIFY_FAILED' error, try running 'pip install certifi
+/Applications/Python\ 3.6/Install\ Certificates.command' in your terminal.) 
 
 Separate terminal:
 
