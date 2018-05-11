@@ -123,6 +123,25 @@ def blacklist(*args, **kwargs):
     queries.increment_requests_for_address(address)
     return jsonify(queries.get_address(address).get("Item"))
 
+@app.route("/clear_address")
+def clear_address(*args, **kwargs):
+    '''
+    For testing purposes, expose an endpoint
+    to clear the record of a client's ip address
+    '''
+
+    address = request.remote_addr
+
+    print("Clearing address", address)
+    try:
+        queries.delete_address(address)
+        return jsonify({ "status": 200, "message": "Successfully cleared %s" % address })
+
+    except Exception as e:
+        return jsonify({ "status": 500, "error": e })
+
+
+
 ###
 # Bacth scraping mechanism. Enables a client
 # to create scraping jobs.
