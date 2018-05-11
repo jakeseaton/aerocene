@@ -19,9 +19,9 @@ def scrape_endpoint(endpoint):
             print("Request", counter)
 
             curr_proxy = proxy.create_proxy_dict(random.choice(proxies))
-            print("Proxy", curr_proxy)
 
             response = requests.get(URL, proxies=curr_proxy)
+            
 
             status = json.loads(response.content).get("status", 200)
 

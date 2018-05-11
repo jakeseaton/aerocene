@@ -34,7 +34,7 @@ def get_proxies():
 
 def create_proxy_dict(proxy):
     return {
-        'http': 'http://%s:%s' % (proxy['ip'], proxy['port']),
+        'https': 'https://%s:%s' % (proxy['ip'], proxy['port']),
         # 'https:': 'http://%s:%s' % (proxy['ip'], proxy['port'])
     }
 
