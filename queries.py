@@ -3,11 +3,11 @@ import settings
 import os
 import json
 
-'''
-This file contains
-functions that performs
-queries on dynamodb
-'''
+###
+# This modules contains
+# functions that performs
+# queries on dynamodb
+###
 
 # first, establish a connection to the correct dynamodb.
 # It is important to do this outside of the functions
@@ -29,10 +29,14 @@ else:
     try:
         client = boto3.client('dynamodb')
     except Exception as e:
+        # if that fails, it could be
+        # a misconfigured setttings file
         print("Failed to connect to dynamodb.")
-        print("If you're running locally set DEBUG = False in settings.py")
+        print("If you're running locally set DEBUG = True in settings.py")
         raise SystemExit
 
+# extract the names of the DynamoDB tables that we
+# defined in serverless.yml from the environment variables
 INSTAGRAM_POST_TABLE = os.environ['INSTAGRAM_POST_TABLE']
 SCRAPE_TABLE = os.environ['SCRAPE_TABLE']
 REQUEST_TABLE = os.environ['REQUEST_TABLE']

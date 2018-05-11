@@ -123,7 +123,10 @@ def blacklist(*args, **kwargs):
     queries.increment_requests_for_address(address)
     return jsonify(queries.get_address(address).get("Item"))
 
-
+###
+# Bacth scraping mechanism. Enables a client
+# to create scraping jobs.
+###
 @app.route('/batch_scrape', methods=['GET'])
 def batch_scrape(*args, **kwargs):
     '''
@@ -134,7 +137,7 @@ def batch_scrape(*args, **kwargs):
     '''
 
     # extract arguments from query parameters on the url
-    location = request.args.get("location", 44961364)
+    location = request.args.get("location", settings.DEFAULT_LOCATION)
     start_page = request.args.get("start_page", 0)
     end_page = request.args.get("end_page", 1)
     page_size = int(request.args.get("page_size", settings.PAGE_SIZE))
@@ -182,14 +185,16 @@ def batch_scrape_post(*args, **kwargs):
     '''
     POST request implementation of batch_scrape
     '''
-    location = request.form.get("location", 44961364)
+    location = request.form.get("location", settings.DEFAULT_LOCATION)
     start_page = request.form.get("start_page", 0)
     end_page = request.form.get("end_page", 2)
     page_size = int(equest.form.get("page_size", settings.PAGE_SIZE))
     scrape_id = queries.create_scrape(start_page, end_page, location)
     return jsonify({"scrape_id": scrape_id})
 
-
+###
+# Scraping functionality.
+###
 @app.route('/scrape_instagram', methods=['GET'])
 def scrape_instagram(*args, **kwargs):
     '''
@@ -199,7 +204,7 @@ def scrape_instagram(*args, **kwargs):
 
     # get the location and cursor from the get parameters
     # of the request
-    location = request.args.get('location', 44961364)
+    location = request.args.get('location', settings.DEFAULT_LOCATION)
     cursor = request.args.get('cursor', '')
     page_size = int(request.args.get("page_size", settings.PAGE_SIZE))
 

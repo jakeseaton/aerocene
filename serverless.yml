@@ -60,13 +60,6 @@ functions:
             Fn::GetAtt:
               - ScrapeDynamoDbTable
               - StreamArn
-  trial:
-    handler: functions.trial
-  # cron_launcher:
-  #   handler: handler.cron_launcher
-  #   events:
-  #     - schedule: rate(1 minute)
-
 resources:
   Resources:
 
