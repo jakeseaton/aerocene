@@ -21,7 +21,6 @@ def scrape_endpoint(endpoint):
             curr_proxy = proxy.create_proxy_dict(random.choice(proxies))
 
             response = requests.get(URL, proxies=curr_proxy)
-            
 
             status = json.loads(response.content).get("status", 200)
 
@@ -44,7 +43,7 @@ if __name__ == "__main__":
         assert endpoint in ["backoff", "blacklist", "rate_limit"]
     except:
         import traceback; traceback.print_exc();
-        print("Usage: python trial3.py <endpoint:backoff | blacklist | rate_limit>")
+        print("Usage: python trial4.py <endpoint:backoff | blacklist | rate_limit>")
         raise SystemExit
 
     if settings.DEBUG:
