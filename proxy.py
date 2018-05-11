@@ -24,7 +24,7 @@ def get_proxies():
     soup = BeautifulSoup(proxies_doc, 'html.parser')
     proxies_table = soup.find(id='proxylisttable')
 
-    #Save proxies in the list ip, port pair.
+    # Save proxies in the list ip, port pair.
     for row in proxies_table.tbody.find_all('tr'):
         proxies.append({
             'ip': row.find_all('td')[0].string,
@@ -32,11 +32,27 @@ def get_proxies():
         })
     return proxies
 
+proxies = get_proxies()
+
+
+def get_random_proxy():
+    return random.choice(proxies)
+
+
+def get_random_proxy_dict():
+    return create_proxy_dict(get_random_proxy())
+
+
+def get_random_http_proxy():
+    p = get_random_proxy()
+    return 'http://' + p['ip'] + ':' + p['port']
+
 def create_proxy_dict(proxy):
     return {
         'https': 'https://%s:%s' % (proxy['ip'], proxy['port']),
         # 'https:': 'http://%s:%s' % (proxy['ip'], proxy['port'])
     }
+
 
 def rotate_proxies(event, context):
     proxies = get_proxies()
@@ -59,14 +75,15 @@ def rotate_proxies(event, context):
 
         # Creating proxy url. Instantiating client.
         spoof = 'http://' + proxy['ip'] + ':' + proxy['port']
-        web_api = Client(auto_patch=True, drop_incompat_keys=False, proxy=spoof, timeout=30)
+        web_api = Client(
+            auto_patch=True, drop_incompat_keys=False, proxy=spoof, timeout=30)
 
         # To test if the client works...
         # token = web_api.csrftoken
         # print("Token", token)
 
         # Change the proxy ip/port combo every 2.
-        if n%2 == 0:
+        if n % 2 == 0:
             proxy_index = random.randint(0, len(proxies) - 1)
             proxy = proxies[proxy_index]
 
@@ -88,6 +105,8 @@ def rotate_proxies(event, context):
     return response
 
 # Futures approach.
+
+
 def cron_launcher(event, context):
     lambda_client = boto3.client('lambda', region_name="us-east-2")
     string_response = ''

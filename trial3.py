@@ -10,6 +10,7 @@ def scrape_endpoint(endpoint):
     counter = 0
 
     URL = settings.PRODUCTION_URL + "/" + endpoint
+    CLEAR_URL = settings.PRODUCTION_URL + "/clear_address"
     print(URL)
     try:
         while True:
@@ -25,8 +26,11 @@ def scrape_endpoint(endpoint):
 
     except requests.Timeout:
         print("Timed out after", counter, "requests")
+
     except Exception as e:
         print(e)
+
+    requests.get(CLEAR_URL)
 
 
 if __name__ == "__main__":

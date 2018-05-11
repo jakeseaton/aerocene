@@ -1,4 +1,4 @@
-DEBUG = True
+DEBUG = False
 
 PRODUCTION_URL = "https://ozh5lhpa2k.execute-api.us-east-2.amazonaws.com/production"
 
