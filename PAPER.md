@@ -121,7 +121,7 @@ Each cell in the table represents the average time of five runs of a particular 
 | Trial 1               | 56.95    | 84.81   | 97.52    |
 | Trial 2               | 190.1    | 195.2   | 215      |
 
-While Trials 1 and 2 never got blocked by Instagram, Trial 0 was frequently blocked when it tried to send double digit requests in a short amount of time. This confirmed our hypothesis that the anonymization of scraping requests through AWS Lambda would help a scraping system avoid getting blacklisted by the sites it attempts to scrape.
+While Trials 1 and 2 never got blocked by Instagram, Trial 0 was frequently blocked when it tried to send double digit requests in a short amount of time.
 
 
 <img width="1440" alt="screen shot 2018-05-11 at 9 00 51 pm" src="https://user-images.githubusercontent.com/7296193/39952543-96d0d642-555e-11e8-960c-a28622a6eb25.png">
@@ -132,7 +132,15 @@ This chart compares the performance of the three systems when used to scrape 500
 
 This chart compares the performance of the three systems across the different ways to scrape 500 records. It appears that in all cases scraping fewer, larger pages is better than many smaller pages. This helps us to understand why Instagram, in an attempt to restrict access to its data, would reduce the maximum page size with which third parties could access its data.
 
-Both charts indicate that Aerocene is generally slower than scraping iteratively, but not exponentially so, which means that it may be worth using to scrape systems such as Instagram that frequently block implementations such as the Local trial.
+Both charts indicate that Aerocene is generally slower than scraping iteratively, but not exponentially so, which means that it may be worth using to scrape systems such as Instagram that frequently block implementations such as the local trial.
+
+It makes sense that running a single-threaded scraper locally was faster than sending instructions to and from AWS and waiting for events to propagate and trigger lambda functions. In the first case you are sending requests to Instagram, while in the second case you are sending requests to a system that then performs other work before eventually sending the same requests to Instagram.
+
+Therefore, these results invalidated our hypothesis that Aerocene could effectively "parallelize" on Instagram's unique cursor architecture to outperform canonical scraping, but confirmed that it would perform better against systems inclined to block repeat visitors. The local scraper was blocked frequently, and couldn't reliably send more than 100-200 requests in a row without Instagram picking up on it.
+
+The second fastest configuration was using lambda functions in the cloud to perform the actual scraping. This is exactly the same as running it locally, except you’re also paying Amazon to function as a proxy for the requests you would otherwise be making directly. This was effective at preventing the local machine from getting blacklisted, but wastes a lot of resources on round trips to and from AWS, and the local machine must wait longer on each request to begin the next scrape.
+
+While the slowest, Aerocene was the only configuration that freed the local machine to do other things while the job was being performed. It was also the only configuration to also store the scraped information in a database.
 
 # Discussion/Next Steps
 
@@ -143,5 +151,6 @@ Second, we could augment to the features on our adversarial web server. For exam
 Third, as mentioned previously, DynamoDB event triggers were used to speed up the web scraping process. We could utilize different trigger systems instead which may be faster. Specifically, Amazon SNS (Simple Notification Server) and AWS Lambda functions can be integrated so that Amazon SNS system can trigger Lambda functions. When a topic is published to a topic on the SNS system, the Lambda function is invoked with the payload of the published message. This architecture could adopted for scraping purposes. Perhaps the Amazon SNS system provides more efficient event triggering mechanisms than what we used for testing in this paper.
 
 We gained a lot of hands on experience working with AWS which is an important skill. Dev-ops is hard...
+
 
 
