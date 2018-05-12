@@ -95,10 +95,39 @@ A common technique that many websites and REST APIs use involves tracking the ip
 To do this we use a python library for generating fake user agents combined with the table of public SSL/HTTPS proxies on [ssl.proxies.org](ssl.proxies.org). Then, each outgoing request can simply select a random proxy and user agent to masquerade as when making a query to our server. If a proxy ever failed a request, then it was thrown out, and another proxy address was would be randomly selected. The user agent randomization was important, because some servers get suspicious when the ip address of a request is different but everything else is the same.
 
 While we were successfully able to trick our own server using this method, we ultimately didn't need to use it as part of the CloudFormation for scraping Instagram, because using AWS Lambda sufficiently distributed requests between enough locations in the cloud to avoid detection.
-
 # Results
 <img width="1440" alt="screen shot 2018-05-11 at 8 20 56 pm" src="https://user-images.githubusercontent.com/7296193/39952280-d8e755e8-5558-11e8-8321-d4d59b39190a.png">
 
+We ran a series of trials...
+
+Each cell in the table represents the average time of five runs of a particular trial. We ran each trial using three different ways to reach the desired number of records. For example, `10 x 50` means sending ten requests that each scrape fifty records from Instagram.
+
+| Scraping 500 Records | 10 x 50  | 20 x 25 | 25 x 20  |
+|----------------------|----------|---------|----------|
+| Trial 0              | 17.86    | 31.74   | 36.16    |
+| Trial 1              | 26.14    | 36.5    | 49.76    |
+| Trial 2              | 87.96    | 91.5    | 92.3     |
+
+Trial 0 got blocked repeatedly when it attempted to send more than ten requests in a row.
+
+
+| Scraping 1000 Records | 20 x 50  | 40 x 25 | 25 x 40  |
+|-----------------------|----------|---------|----------|
+| Trial 0               | 33.16    | 51.8    | 60.14    |
+| Trial 1               | 56.95    | 84.81   | 97.52    |
+| Trial 2               | 190.1    | 195.2   | 215      |
+
+Trial 0 got blocked by instagram when it tried to send 40 consecutive requests
+
+Discussion
+
+<img width="1440" alt="screen shot 2018-05-11 at 9 01 05 pm" src="https://user-images.githubusercontent.com/7296193/39952542-96c20e28-555e-11e8-8656-2cf34ce9c6df.png">
+
+This chart shows ...
+
+<img width="1440" alt="screen shot 2018-05-11 at 9 00 51 pm" src="https://user-images.githubusercontent.com/7296193/39952543-96d0d642-555e-11e8-960c-a28622a6eb25.png">
+
+This chart shows...
 # Discussion/Next Steps
 
 A number of steps can be taken to extend the analysis in the project. First, the scraping could be attempted on other popular websites. Instagram gives very limited access to its data to developers and community members. Other systems such as Twitter or LinkedIn might provide different restrictions on accessing data. In an era where access to data is valuable, it is critical to understand the limits of scraping with different technologies. Instagram's REST API system is innovative because it leverages a cursor system that prevents scrapers from parallelizing requests. Other API systems do not necessarily use the concept of cursors. We could build more parallelized lambda function scrapers in such scenarios to get a more accurate picture of how scalable cloud based functions would be. Multithreaded solutions would be an interesting alternative to more thoroughly explore.
