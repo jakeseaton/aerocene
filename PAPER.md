@@ -1,9 +1,7 @@
 # Aerocene
+An AWS CloudFormation designed for serverless web scraping.
 
-A CloudFormation for distributed, fault-tolerant web scraping.
-
-## Group Members
-Jake Seaton, Lisa Vo, Vishal Jain, Divyam Misra
+CS262 Group Members: Jake Seaton, Lisa Vo, Vishal Jain, Divyam Misra
 
 # Abstract
 
@@ -37,7 +35,7 @@ This means that 'serverless' designs will by nature resolve some of the largest 
 
 The objective of this project was the build an interesting distributed system for performing web scraping tasks using serverless technology. Our hypothesis was that a serverless model would be cheaper, faster to build, and naturally circumvent some of the larger pain points of web scraping development such as rate limiting and blacklisting. We were optimistic that parallelizing across cloud functions might even result in a performance boost.
 
-At the time this project began, Instagram's data was among the most highly coveted by web scrapers. Instagram's API and website made content posted on public profiles readily available to those with a system capable of ingesting the firehose of images and information posted there on a daily basis. Entire companies such as [Trendalytics](https://www.trendalytics.co/), [Influenster](https://www.influenster.com/) and  [Heuritech](https://www.heuritech.com/) have built businesses based on processing the image and textual data of instagram and packaging it for the fashion industry. This  rich, publicly available dataset was therefore the ideal initial target for our scraping strategies.
+At the time this project began, Instagram's data was among the most highly coveted by web scrapers. Instagram's API and website made content posted on public profiles readily available to those with a system capable of ingesting the firehose of images and information posted there on a daily basis. Entire companies such as [Trendalytics](https://www.trendalytics.co/), [Pixlee](https://www.pixlee.com/) and  [Heuritech](https://www.heuritech.com/) have built businesses based on processing the image and textual data of Instagram and packaging it for the fashion industry. This rich, publicly available dataset was therefore the ideal initial target for our scraping strategies.
 
 Shortly after beginning the project, the Cambridge Analytica scandal broke. In response, Instagram and Facebook severely restricted developer access to their api's and began employing innovative methods of preventing web scraping such as random timeouts, an unconventional pagination mechanism and applying an MD-5 hash to the User-Agent and requiring it as a mandatory `x-instagram-gis` header on all requests.
 
@@ -65,9 +63,9 @@ A CloudFormation is simply a relationship between configurations of other AWS se
 ### Serverless Framework
 The serverless framework is a provider-indepdendent command-line interface designed to expedite the process of developing and deploying arbitrarily complex cloud-based systems featuring serverless functionality. We have configured it to use AWS as its cloud provider, enabling it to automate the process of deploying our CloudFormation.
 
-### Putting it all together.
+### Putting The Pieces Together
 
-We've used the Serverless framework to build and deploy a CloudFormation. The file `serverless.yml` defines three DynamoDB tables for requests, scraping jobs, and the data produced by those scraping jobs (in this case, Instagram posts). It describes a set of Lambda functions that emulate the behavior of a server, and points to their definitions in `app.py` and `functions.py`. By requesting that the server start a scraping job, a function creates a record in DynamoDB describing that job. Creation of that record triggers the INSERT event for that table, which another Lambda function listens for and invokes to execute the job, breaking up the process of scraping an entire website into individual, isolated calls. When the job is done, the DynamoDb record will be updated to reflect this.
+We've used the Serverless framework to build and deploy a CloudFormation. The file `serverless.yml` defines three DynamoDB tables for requests, scraping jobs, and the data produced by those scraping jobs (in this case, Instagram posts). It describes a set of Lambda functions that emulate the behavior of a server, and points to their definitions in `app.py` and `functions.py`. By requesting that the server start a scraping job, a function creates a record in DynamoDB describing that job. Creation of that record triggers the `INSERT` event for that table, which another Lambda function listens for and invokes to execute the job, breaking up the process of scraping an entire website into individual, isolated calls. When the job is done, the DynamoDb record will be updated to reflect this.
 
 
 <img width="1440" alt="screen shot 2018-05-11 at 7 55 46 pm" src="https://user-images.githubusercontent.com/7296193/39952016-674d8e00-5555-11e8-8875-add4388f4be6.png">
@@ -88,6 +86,55 @@ We've used the Serverless framework to build and deploy a CloudFormation. The fi
 
 ## Event-Driven Design
 We decoupled the logic of initiating a scraping job and executing it. Instead of having a single function that would receive a request, execute the necessary scraping, and return a response, various functions are triggered by events that propogate throughout the CloudFormation.  This decoupling is our optimization for the `cursor` mechanic, as it enables jobs to overlap slightly. For example, a function creates a scraping job in DynamoDB. A second function is triggered by the `INSERT` event, and sends the first request to Instagram. It receives a response and immediately inserts the `cursor` into DynamoDB. While it is processing the list of images, yet another function is triggered by that `INSERT` event to begin the next request. However, it is entirely possible that the time required for these events to propogate through the network and invoke the necessary functions is greater than the time saved by this "parallelization," making our implementation ultimately slower than a single-threaded function that waits on each request before performing the next.
+
+As a concrete example, here we describe a Lambda function that handles events in the stream created by the ScrapeDynamoDBTable. (The black arrow connecting DynamoDB to AWS Lambda above)
+
+```yaml
+  # serverless.yaml
+  scrapeStream:
+    handler: functions.scrape_stream_handler
+    events:
+      - stream:
+          type: dynamodb
+          batchSize: 1
+          arn:
+            Fn::GetAtt:
+              - ScrapeDynamoDbTable
+              - StreamArn
+```
+
+Then, we implement that function in `functions.py`
+```python
+# functions.py
+def scrape_stream_handler(event, context):
+    '''
+    Process CloudWatch events in thhe ScrapeDynamoDbTable
+    stream. Events are of the form
+        {
+            "Records": [
+                {
+                    "eventName": <string>
+                    "dynamodb": <ScrapeRecord>
+                },
+                {}...
+            ]
+        }
+    '''
+    for record in event.get("Records", []):
+        if record['eventName'] == "INSERT":
+            scrape = record['dynamodb']['NewImage']
+            scrape_next_page(scrape)
+
+        if record['eventName'] == "MODIFY":
+            old_image = record['dynamodb']['OldImage']
+            new_image = record['dynamodb']['NewImage']
+            # if the cursors are different
+            if extract_cursor(new_image) != extract_cursor(old_image):
+                scrape_next_page(new_image)
+    return {}
+
+```
+
 
 ## IP Rotation
 A common technique that many websites and REST APIs use involves tracking the ip addresses and user agent details of incoming requests. If too many requests are received from the same address or agent, it's likely that your site is being scraped. To try to trick our own adversarial server, and potentially a website like Instagram, we implemented a system for rotating requests between anonymous proxies, to avoid detection, rate limiting, and blacklisting.
@@ -111,7 +158,7 @@ For the exponential backoff protocol, the simpler client experienced increasing 
 While we were successfully able to trick our own server using this method, we ultimately didn't need to use it as part of the CloudFormation for scraping Instagram, because using AWS Lambda sufficiently distributed requests between enough locations in the cloud to avoid detection.
 
 # Results
-We ran a series of trial scripts to test the performance of the three configurations:
+We ran a series of trial scripts to test the performance of three configurations:
 
 <img width="1440" alt="screen shot 2018-05-11 at 8 20 56 pm" src="https://user-images.githubusercontent.com/7296193/39952280-d8e755e8-5558-11e8-8321-d4d59b39190a.png">
 
@@ -124,17 +171,17 @@ We ran a series of trial scripts to test the performance of the three configurat
 
 | Scraping 500 Records | 10 x 50  | 20 x 25 | 25 x 20  |
 |----------------------|----------|---------|----------|
-| Trial 0              | 17.86    | 31.74   | 36.16    |
-| Trial 1              | 26.14    | 36.5    | 49.76    |
-| Trial 2              | 87.96    | 91.5    | 92.3     |
+| Trial 0              | 17.86s    | 31.74s   | 36.16s    |
+| Trial 1              | 26.14s    | 36.5s    | 49.76s    |
+| Trial 2              | 87.96s    | 91.5s    | 92.3s     |
 
 Each cell in the table represents the average time of five runs of a particular trial. We ran each trial using three different ways to reach the desired number of records. For example, `10 x 50` means sending ten requests that each scrape fifty records from Instagram.
 
 | Scraping 1000 Records | 20 x 50  | 40 x 25 | 25 x 40  |
 |-----------------------|----------|---------|----------|
-| Trial 0               | 33.16    | 51.8    | 60.14    |
-| Trial 1               | 56.95    | 84.81   | 97.52    |
-| Trial 2               | 190.1    | 195.2   | 215      |
+| Trial 0               | 33.16s    | 51.8s    | 60.14s    |
+| Trial 1               | 56.95s    | 84.81s   | 97.52s    |
+| Trial 2               | 190.1s    | 195.2s   | 215s      |
 
 While Trials 1 and 2 never got blocked by Instagram, Trial 0 was frequently blocked when it tried to send double digit requests in a short amount of time.
 
@@ -169,6 +216,7 @@ Second, as Lambda permits millions of free invocations per month for developers,
 Finally, we could continue to expand the features on our adversarial web server, which might be independently useful, both in the open source community for testing scraping libraries and in industry for implementing security measures. For example, there are advanced features that allow servers to detect requests from potential proxy IP addresses. Adding such features would provide a more comprehensive and realistic view of how effective proxies could be for scraping data from well maintained and relatively secure servers.
 
 This project enabled us to gain a lot of hands on experience working with state-of-the-art technologies and distributed design paradigms. Despite the laundry list of AWS services we worked with, we only scratched the surface of what the platform is able to do and the incredibly intricate distributed systems it enables curious engineers to rapidly build.
+
 
 
 

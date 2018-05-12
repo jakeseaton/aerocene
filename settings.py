@@ -1,6 +1,6 @@
 DEBUG = False
 
-PRODUCTION_URL = "https://c7u2ohafuc.execute-api.us-east-2.amazonaws.com/production"
+PRODUCTION_URL = ""
 
 if DEBUG:
     PRODUCTION_URL = "http://localhost:5000"
