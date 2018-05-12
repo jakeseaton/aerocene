@@ -1,7 +1,4 @@
-# Aerocene
-A CloudFormation for distributed, fault-tolerant web scraping.
-
-# Directory Structure
+<img width="1438" alt="screen shot 2018-05-11 at 7 41 30 pm" src="https://user-images.githubusercontent.com/7296193/39951836-598b4ce6-5553-11e8-8ac9-82c3df5939f2.png">
 
 # Set Up
 
@@ -65,7 +62,7 @@ Install dynamodb plugin for serverless
 - run `sls dynamodb start --migrate` to create a local dynamodb server
 
 - open a new terminal and run `sls wsgi serve` to run the lambda server. (If you get a 'SSL: CERTIFICATE_VERIFY_FAILED' error, try running 'pip install certifi
-/Applications/Python\ 3.6/Install\ Certificates.command' in your terminal.) 
+/Applications/Python\ 3.6/Install\ Certificates.command' in your terminal.)
 
 - Open a browser to `http://localhost:5000`. You should receive a successful response.
 
@@ -89,7 +86,7 @@ Trial 3 tests the adversarial server. You need to have the server and dynamodb r
 
 Separate terminal:
 
-`sls wsgi serve` 
+`sls wsgi serve`
 
 Separate terminal:
 

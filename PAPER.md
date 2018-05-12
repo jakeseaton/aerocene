@@ -1,6 +1,9 @@
-<img width="1438" alt="screen shot 2018-05-11 at 7 41 30 pm" src="https://user-images.githubusercontent.com/7296193/39951836-598b4ce6-5553-11e8-8ac9-82c3df5939f2.png">
+# Aerocene
 
-Group Members: Jake Seato n, Lisa Vo, Vishal Jain, Divyam Misra
+A CloudFormation for distributed, fault-tolerant web scraping.
+
+###Group Members
+Jake Seaton, Lisa Vo, Vishal Jain, Divyam Misra
 
 # Abstract
 
