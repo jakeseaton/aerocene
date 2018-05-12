@@ -124,7 +124,11 @@ If you visit the AWS console you should be able to see your lambda functions cre
 
 ## Step 7: Run Production Trial
 
-Trials 2 and 4 test the production deployment.
+Trials 1 and 2 can interact with the production build
+
+Trial 1 scrapes instagram through AWS Lambda
+
+`time python trial1 <pages> <page_size>`
 
 Trial 2 scrapes a number of pages using the Aerocene Cloudformation, creating a scrape record and then periodically querying to see if it is finished.
 
