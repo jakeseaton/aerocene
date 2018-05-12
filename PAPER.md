@@ -132,6 +132,8 @@ This chart compares the performance of the three systems when used to scrape 500
 
 This chart compares the performance of the three systems across the different ways to scrape 500 records. It appears that in all cases scraping fewer, larger pages is better than many smaller pages. This helps us to understand why Instagram, in an attempt to restrict access to its data, would reduce the maximum page size with which third parties could access its data.
 
+# Discussion
+
 Both charts indicate that Aerocene is generally slower than scraping iteratively, but not exponentially so, which means that it may be worth using to scrape systems such as Instagram that frequently block implementations such as the local trial.
 
 It makes sense that running a single-threaded scraper locally was faster than sending instructions to and from AWS and waiting for events to propagate and trigger lambda functions. In the first case you are sending requests to Instagram, while in the second case you are sending requests to a system that then performs other work before eventually sending the same requests to Instagram.
@@ -142,7 +144,7 @@ The second fastest configuration was using lambda functions in the cloud to perf
 
 While the slowest, Aerocene was the only configuration that freed the local machine to do other things while the job was being performed. It was also the only configuration to also store the scraped information in a database.
 
-# Discussion/Next Steps
+# Next Steps
 
 A number of steps can be taken to extend the analysis in the project. First, the scraping could be attempted on other popular websites. Instagram gives very limited access to its data to developers and community members. Other systems such as Twitter or LinkedIn might provide different restrictions on accessing data. In an era where access to data is valuable, it is critical to understand the limits of scraping with different technologies. Instagram's REST API system is innovative because it leverages a cursor system that prevents scrapers from parallelizing requests. Other API systems do not necessarily use the concept of cursors. We could build more parallelized lambda function scrapers in such scenarios to get a more accurate picture of how scalable cloud based functions would be. Multithreaded solutions would be an interesting alternative to more thoroughly explore.
 
