@@ -2,7 +2,7 @@
 
 A CloudFormation for distributed, fault-tolerant web scraping.
 
-###Group Members
+## Group Members
 Jake Seaton, Lisa Vo, Vishal Jain, Divyam Misra
 
 # Abstract
