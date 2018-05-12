@@ -1,6 +1,6 @@
 from instagram_web_api import Client
 import settings
-import proxy
+# import proxy
 
 '''
 This file interfaces between Aerocene and the
@@ -34,7 +34,7 @@ def scrape(event, context, page_size=settings.PAGE_SIZE):
         location_id,
         count=page_size,
         end_cursor=end_cursor,
-        proxy=proxy.get_random_http_proxy()
+        # proxy=proxy.get_random_http_proxy()
     )
 
     if location_feed_info['status'] != "ok":
